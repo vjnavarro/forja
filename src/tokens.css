@@ -1,0 +1,23 @@
+:root {
+  --forja-primary: #0b2a4a;
+  --forja-secondary: #1d5ad8;
+  --forja-blue-light: #e6f0fb;
+  --forja-gray-dark: #1f2937;
+  --forja-gray-mid: #6b7780;
+  --forja-gray-light: #e5e7eb;
+  --forja-success: #16a34a;
+  --forja-danger: #dc2626;
+  --forja-warning: #986318;
+  --forja-white: #fff;
+  --background: #f4f7fb;
+  --surface: var(--forja-white);
+  --text-primary: var(--forja-primary);
+  --text-secondary: #56677a;
+  --border: #e0e7ef;
+  --success-text: #197347;
+  --success-surface: #eaf6ef;
+  --navy-deep: #071e36;
+  --text-on-dark: #c3d2e3;
+  --forja-font-sans:
+    'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

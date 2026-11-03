@@ -1,39 +1,229 @@
-import React, {useState} from 'react';
-import {createRoot} from 'react-dom/client';
-import {Activity, ArrowDownRight, ArrowUpRight, Check, ChevronRight, Dumbbell, Flame, LayoutDashboard, Library, Play, Plus, Target, Trophy, Waves, X} from 'lucide-react';
-import {ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine} from 'recharts';
-import {weights, sessions, exercises} from './demo';
-import {readDemo, saveDemo, resetDemo} from './storage';
+import { useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import {
+  Activity,
+  ArrowUpRight,
+  Check,
+  ChevronRight,
+  LayoutDashboard,
+  Library,
+  Plus,
+  RotateCcw,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
+import './fonts.css';
+import { weights, sessions } from './demo';
+import { readDemo, saveDemo, resetDemo } from './storage';
+import { formatNumber } from './progress';
+import { Brand } from './components/Brand';
+import { Dashboard } from './components/Dashboard';
+import { WeekPlan } from './components/WeekPlan';
+import { ExerciseLibrary } from './components/ExerciseLibrary';
+import { WeightDialog } from './components/WeightDialog';
 import './style.css';
-const icons = {Natación:Waves,Fuerza:Dumbbell,Core:Activity};
-function App(){
- const [stored,setStored]=useState(readDemo);
- const [tab,setTab]=useState('dashboard');
- const [filter,setFilter]=useState('Todos');
- const [modal,setModal]=useState(false);
- const [notice,setNotice]=useState('');
- const records=Array.isArray(stored.weights)&&stored.weights.length?stored.weights:weights;
- const completed=stored.completed ?? sessions.filter(s=>s.done).map(s=>s.id);
- const current=records.at(-1).kg, lost=+(86.4-current).toFixed(1), progress=Math.max(0,Math.min(100,lost/8.4*100));
- const update=(patch)=>{const next={...stored,...patch};setStored(next);if(!saveDemo(next))setNotice('No se pudo guardar en este navegador. Los cambios durarán esta sesión.');};
- const toggle=id=>update({completed:completed.includes(id)?completed.filter(x=>x!==id):[...completed,id]});
- const navigation=[['dashboard','Mi progreso',LayoutDashboard],['week','Mi semana',Activity],['library','Biblioteca',Library]];
- return <div className="app"><aside className="sidebar"><a className="brand" href="#" aria-label="FORJA inicio" onClick={e=>{e.preventDefault();setTab('dashboard')}}><Flame size={29} fill="currentColor"/> FORJA<span>MI TRANSFORMACIÓN</span></a><div className="nav-label">TU ESPACIO</div><nav>{navigation.map(([id,label,Icon])=><button key={id} className={tab===id?'active':''} onClick={()=>setTab(id)}><Icon size={20}/>{label}{tab===id&&<span className="nav-dot"/>}</button>)}</nav><div className="sidebar-bottom"><div className="mini-flame"><Flame size={21}/></div><strong>La constancia te transforma.</strong><p>Cada pequeño paso cuenta.</p><div className="demo-tag">ENTORNO DE DEMOSTRACIÓN</div></div></aside>
- <main><header><div className="breadcrumb">TU CAMINO. TU RITMO.</div><div className="profile"><span className="live-dot"/> Modo demo <div className="avatar">F</div></div></header>
- <section className="page-heading"><div><div className="eyebrow">FORJA · MI TRANSFORMACIÓN</div><h1>{tab==='dashboard'?'El cambio se construye.':tab==='week'?'Una semana. Cinco pasos.':'Muévete con intención.'}</h1><p>{tab==='dashboard'?'Mira lo lejos que has llegado. Y sigue adelante.':tab==='week'?'Tu plan es el punto de partida. La constancia, tu mejor aliada.':'Tu biblioteca de movimientos para entrenar con confianza.'}</p></div><span className="week-badge"><span/> SEMANA 08 <b>de 16</b></span></section>
- {notice&&<div role="status" className="notice">{notice}<button aria-label="Cerrar aviso" onClick={()=>setNotice('')}><X size={16}/></button></div>}
- {tab==='dashboard'&&<><section className="hero"><div className="hero-copy"><span className="pill"><Flame size={14}/> ESTÁS EN EL CAMINO</span><h2>No es solo peso.<br/>Es todo lo que <em>ganas.</em></h2><p>Más energía. Más fuerza. Más tú.<br/>Sigue construyendo tu mejor versión.</p><button className="lime-button" onClick={()=>setTab('week')}>Ver mi semana <ArrowUpRight size={17}/></button></div><div className="hero-art" aria-hidden="true"><div className="orb orb-one"/><div className="orb orb-two"/><div className="art-lines"/><span className="art-word">FORJA</span><div className="art-caption"><span/> DISCIPLINA · PROGRESO · EQUILIBRIO</div></div></section>
- <section className="stats"><Stat label="PESO ACTUAL" value={current.toFixed(1)} unit="kg" icon={Activity} note="Tu último registro de demo"/><Stat label="CAMBIO TOTAL" value={`${lost>=0?'−':'+'}${Math.abs(lost).toFixed(1)}`} unit="kg" icon={ArrowDownRight} note="Desde el inicio del camino" positive/><Stat label="OBJETIVO" value="78.0" unit="kg" icon={Target} note={`${Math.max(0,current-78).toFixed(1)} kg para tu objetivo`}/><Stat label="ESTA SEMANA" value={completed.length} unit="/ 5" icon={Flame} note="Sesiones completadas"/></section>
- <div className="dashboard-grid"><section className="card chart-card"><div className="section-head"><div><h3>Tu evolución</h3><p>Pequeños cambios. Grandes resultados.</p></div><button className="outline-button" onClick={()=>setModal(true)}><Plus size={15}/> Registro demo</button></div><div className="chart-summary"><strong>{current.toFixed(1)} <small>kg</small></strong><span className="green-text">{lost>=0?'↓':'↑'} {Math.abs(lost).toFixed(1)} kg <span>en {records.length} registros</span></span></div><div className="chart" role="img" aria-label={`Evolución del peso ficticio desde 86,4 hasta ${current} kilos. Objetivo: 78 kilos.`}><ResponsiveContainer width="100%" height="100%"><AreaChart data={records} margin={{top:15,right:10,left:-24,bottom:0}}><defs><linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#81a35b" stopOpacity={.22}/><stop offset="100%" stopColor="#81a35b" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 5" vertical={false} stroke="#edf0e9"/><XAxis dataKey="week" axisLine={false} tickLine={false} tick={{fill:'#92978b',fontSize:10}} dy={10}/><YAxis domain={['dataMin - 1','dataMax + 1']} axisLine={false} tickLine={false} tick={{fill:'#92978b',fontSize:11}}/><Tooltip formatter={v=>[`${v} kg`,'Peso demo']} contentStyle={{borderRadius:12,border:'1px solid #e7eadd'}}/><ReferenceLine y={78} stroke="#bec7b1" strokeDasharray="4 4"/><Area type="monotone" dataKey="kg" stroke="#789a51" strokeWidth={3} fill="url(#weightFill)" dot={{r:3,fill:'#789a51',stroke:'#fff',strokeWidth:2}} activeDot={{r:5}}/></AreaChart></ResponsiveContainer></div><div className="chart-footer"><span><i/> Peso de demostración</span><span>INICIO <b>86.4 kg</b></span></div></section>
- <section className="card goal-card"><div className="section-head"><h3>Un objetivo. Tu camino.</h3><Target size={19}/></div><div className="goal-ring" style={{'--progress':`${progress}%`}}><div><span>{Math.round(progress)}<small>%</small></span><p>del camino recorrido</p></div></div><div className="goal-numbers"><span>Inicio<strong>86.4 <small>kg</small></strong></span><ChevronRight size={17}/><span>Tu meta<strong>78.0 <small>kg</small></strong></span></div><div className="encouragement"><Flame size={18}/><span>El progreso también es seguir intentándolo.</span></div></section></div>
- <div className="dashboard-grid lower-grid"><section className="card"><div className="section-head"><div><h3>Tu semana, en movimiento</h3><p>Encuentra el equilibrio en cada sesión.</p></div><button className="text-button" onClick={()=>setTab('week')}>Ver plan <ChevronRight size={15}/></button></div><div className="activity-goals">{Object.entries(icons).map(([type,Icon])=>{const group=sessions.filter(s=>s.type===type),n=group.filter(s=>completed.includes(s.id)).length;return <div key={type}><div className={`type-icon ${type}`}><Icon size={20}/></div><strong>{type}</strong><span>{n} de {group.length} sesiones</span><div className="track"><i style={{width:`${n/group.length*100}%`}}/></div></div>})}</div></section><section className="card milestones"><div className="section-head"><h3>Cada paso cuenta</h3><Trophy size={18}/></div>{[{title:'El primer paso',text:'Comenzaste tu transformación',done:true},{title:'5 kg menos',text:'Tu próximo hito de peso',done:lost>=5},{title:'Una semana completa',text:'Completa tus cinco sesiones',done:completed.length===5}].map(m=><div className="milestone" key={m.title}><span className={m.done?'unlocked':''}>{m.done?<Check size={15}/>:<Target size={15}/>}</span><div><strong>{m.title}</strong><p>{m.text}</p></div>{m.done&&<span className="achieved">LOGRADO</span>}</div>)}</section></div></>}
- {tab==='week'&&<><section className="week-intro card"><div><h3>Tu compromiso contigo</h3><p>Marca cada sesión cuando la completes. Puedes desmarcarla para repetir la demo.</p></div><strong>{completed.length}<span> / 5 completadas</span></strong><div className="track"><i style={{width:`${completed.length/5*100}%`}}/></div></section><div className="session-list">{sessions.map(s=>{const Icon=icons[s.type],done=completed.includes(s.id);return <article className={`card session ${done?'session-done':''}`} key={s.id}><div className="session-day"><span>{s.day}</span><strong>{s.date}</strong></div><div className={`type-icon ${s.type}`}><Icon size={24}/></div><div className="session-info"><span className="eyebrow">{s.type} · {s.duration}</span><h3>{s.title}</h3><p>{s.detail}</p></div><button aria-pressed={done} className={done?'done-button':'outline-button'} onClick={()=>toggle(s.id)}>{done?<Check size={17}/>:<Plus size={17}/>} {done?'Completada':'Completar'}</button></article>})}</div><p className="demo-explanation">Plan ilustrativo con fechas ficticias. No sustituye una valoración o planificación profesional.</p></>}
- {tab==='library'&&<><div className="filters" aria-label="Filtrar ejercicios">{['Todos',...Object.keys(icons)].map(t=><button aria-pressed={filter===t} className={filter===t?'selected':''} key={t} onClick={()=>setFilter(t)}>{t}</button>)}</div><section className="exercise-grid">{exercises.filter(e=>filter==='Todos'||e.type===filter).map((e,i)=>{const Icon=icons[e.type];return <article className="card exercise" key={e.name}><div className={`exercise-art ${e.type}`}><Icon size={70} strokeWidth={1}/><span>0{i+1}</span></div><div className="exercise-copy"><span className="eyebrow">{e.type}</span><h3>{e.name}</h3><p>{e.detail}</p><a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(e.query)}`} target="_blank" rel="noopener noreferrer"><Play size={15}/> Buscar vídeos de técnica <ArrowUpRight size={15}/></a></div></article>})}</section><p className="demo-explanation">Los enlaces abren búsquedas de vídeos en YouTube. Revisa la fuente y adapta los ejercicios a tu nivel.</p></>}
- <footer><span><Flame size={14}/> FORJA <span>El hábito de superarte.</span></span><button onClick={()=>{if(window.confirm('¿Restablecer todos los datos ficticios de la demo?')){if(resetDemo()){setStored({});setNotice('Demo restablecida.');}else setNotice('No se pudo restablecer el almacenamiento.');}}}>Restablecer demo</button><span>Solo datos ficticios · Guardado en este dispositivo</span></footer>
- </main><nav className="mobile-nav" aria-label="Navegación móvil">{navigation.map(([id,label,Icon])=><button className={tab===id?'active':''} onClick={()=>setTab(id)} key={id}><Icon size={21}/><span>{label}</span></button>)}</nav>
- {modal&&<WeightDialog onClose={()=>setModal(false)} onSave={kg=>{update({weights:[...records,{week:`Sem ${records.length+1}`,kg}]});setModal(false);setNotice('Registro ficticio añadido a tu evolución.');}}/>}</div>
-}
-function Stat({label,value,unit,icon:Icon,note,positive}){return <article className="card stat"><div><span>{label}</span><Icon size={17}/></div><strong className={positive?'green-text':''}>{value}<small>{unit}</small></strong><p>{note}</p></article>}
-function WeightDialog({onClose,onSave}){const [value,setValue]=useState('82.0');return <div className="modal-backdrop" onClick={onClose}><section className="dialog card" role="dialog" aria-modal="true" aria-labelledby="dialog-title" onClick={e=>e.stopPropagation()} onKeyDown={e=>{if(e.key==='Escape')onClose();if(e.key==='Tab'){const items=e.currentTarget.querySelectorAll('button,input');const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}}}><div className="section-head"><h3 id="dialog-title">Un nuevo paso ficticio</h3><button aria-label="Cerrar" onClick={onClose}><X size={20}/></button></div><p>Usa exclusivamente un peso inventado. No introduzcas datos personales reales.</p><form onSubmit={e=>{e.preventDefault();const kg=Number(value);if(Number.isFinite(kg)&&kg>=30&&kg<=250)onSave(kg);}}><label htmlFor="weight">Peso de demostración (kg)</label><input autoFocus id="weight" type="number" inputMode="decimal" min="30" max="250" step="0.1" required value={value} onChange={e=>setValue(e.target.value)}/><button className="lime-button" type="submit"><Plus size={17}/> Añadir registro demo</button></form></section></div>}
 
-createRoot(document.getElementById('root')).render(<App/>);
+const navigation = [
+  ['dashboard', 'Mi progreso', LayoutDashboard],
+  ['week', 'Mi semana', Activity],
+  ['library', 'Biblioteca', Library],
+];
+const headings = {
+  dashboard: [
+    'Cada paso cuenta.',
+    'Tu evolución, tus hábitos y tu próximo objetivo. Todo en un mismo lugar.',
+  ],
+  week: [
+    'Una semana. Cinco pasos.',
+    'Natación, fuerza y core. Encuentra tu equilibrio, sesión a sesión.',
+  ],
+  library: [
+    'Muévete con intención.',
+    'Explora los movimientos y encuentra referencias para tu técnica.',
+  ],
+};
+
+function App() {
+  const [stored, setStored] = useState(readDemo);
+  const [tab, setTab] = useState('dashboard');
+  const [modal, setModal] = useState(false);
+  const [notice, setNotice] = useState('');
+  const heading = useRef(null);
+  const records = stored.weights ?? weights;
+  const completed =
+    stored.completed ?? sessions.filter((session) => session.done).map((session) => session.id);
+  const current = records.at(-1).kg;
+
+  function navigate(nextTab) {
+    if (nextTab === tab) return;
+    setTab(nextTab);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
+  }
+  function update(patch, message) {
+    const next = { ...stored, ...patch };
+    setStored(next);
+    setNotice(
+      saveDemo(next)
+        ? message
+        : 'No se pudo guardar en este navegador. Los cambios durarán esta sesión.',
+    );
+  }
+  function toggle(id) {
+    const done = completed.includes(id);
+    update(
+      { completed: done ? completed.filter((value) => value !== id) : [...completed, id] },
+      done ? 'Sesión desmarcada.' : 'Sesión completada. Un paso más en tu semana.',
+    );
+  }
+  function reset() {
+    if (!window.confirm('¿Restablecer todos los datos ficticios de la demo?')) return;
+    if (resetDemo()) {
+      setStored({});
+      setNotice('Demo restablecida. Puedes empezar de nuevo.');
+    } else setNotice('No se pudo restablecer el almacenamiento de este navegador.');
+  }
+  const navButtons = () =>
+    navigation.map(([id, label, Icon]) => (
+      <button
+        key={id}
+        className={tab === id ? 'active' : ''}
+        aria-current={tab === id ? 'page' : undefined}
+        onClick={() => navigate(id)}
+      >
+        <Icon size={20} />
+        <span>{label}</span>
+        {tab === id && <ChevronRight className="nav-chevron" size={16} />}
+      </button>
+    ));
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#main-content">
+        Saltar al contenido
+      </a>
+      <aside className="sidebar">
+        <button
+          className="brand-home"
+          aria-label="FORJA, ir a mi progreso"
+          onClick={() => navigate('dashboard')}
+        >
+          <Brand />
+          <span>MI TRANSFORMACIÓN</span>
+        </button>
+        <span className="nav-label">TU ESPACIO</span>
+        <nav aria-label="Navegación principal">{navButtons()}</nav>
+        <div className="sidebar-bottom">
+          <Brand compact />
+          <p>
+            Tu camino.
+            <br />
+            <strong>A tu ritmo.</strong>
+          </p>
+          <span>Un espacio para seguir avanzando.</span>
+        </div>
+        <div className="sidebar-demo">
+          <span className="status-dot" /> MODO DEMOSTRACIÓN
+        </div>
+      </aside>
+      <main id="main-content">
+        <header className="topbar">
+          <button
+            className="mobile-brand"
+            aria-label="FORJA, ir a mi progreso"
+            onClick={() => navigate('dashboard')}
+          >
+            <Brand />
+          </button>
+          <div className="breadcrumb">
+            MI TRANSFORMACIÓN
+            <ChevronRight size={13} />
+            <span>{navigation.find(([id]) => id === tab)[1]}</span>
+          </div>
+          <div className="demo-indicator">
+            <span className="status-dot" />
+            <span>Datos de demo</span>
+            <span className="profile-mark">
+              <Brand compact />
+            </span>
+          </div>
+        </header>
+        <section className="page-heading">
+          <div>
+            <span className="eyebrow">FORJA · MI TRANSFORMACIÓN</span>
+            <h1 ref={heading} tabIndex={-1}>
+              {headings[tab][0]}
+            </h1>
+            <p>{headings[tab][1]}</p>
+          </div>
+          <button
+            className="primary-button"
+            aria-label="Registrar peso"
+            onClick={() => setModal(true)}
+          >
+            <Plus size={18} />
+            <span>Registrar peso</span>
+          </button>
+        </section>
+        {notice && (
+          <div className="notice" role="status">
+            <Check size={17} />
+            <span>{notice}</span>
+            <button className="icon-button" aria-label="Cerrar aviso" onClick={() => setNotice('')}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {tab === 'dashboard' && (
+          <Dashboard
+            records={records}
+            completed={completed}
+            onRegister={() => setModal(true)}
+            onShowWeek={() => navigate('week')}
+          />
+        )}
+        {tab === 'week' && <WeekPlan completed={completed} onToggle={toggle} />}
+        {tab === 'library' && <ExerciseLibrary />}
+        <section className="local-note">
+          <ShieldCheck size={17} />
+          <span>Solo datos ficticios. Tus cambios se guardan en este navegador.</span>
+          <span className="local-note-detail">Sin cuentas · Sin sincronización</span>
+        </section>
+        <footer>
+          <div>
+            <Brand compact />
+            <span>
+              FORJA <span>· Mi Transformación</span>
+            </span>
+          </div>
+          <button onClick={reset}>
+            <RotateCcw size={13} />
+            Restablecer demo
+          </button>
+          <span>
+            Un paso cada vez.
+            <ArrowUpRight size={12} />
+          </span>
+        </footer>
+      </main>
+      <nav className="mobile-nav" aria-label="Navegación móvil">
+        {navButtons()}
+      </nav>
+      {modal && (
+        <WeightDialog
+          current={current}
+          onClose={() => setModal(false)}
+          onSave={(kg) => {
+            update(
+              { weights: [...records, { week: `Sem ${records.length + 1}`, kg }] },
+              `Registro ficticio de ${formatNumber(kg)} kg añadido.`,
+            );
+            setModal(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);
