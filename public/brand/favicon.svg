@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 109 131" role="img" aria-label="FORJA symbol">
+  <style>:root{color:#0B2A4A}@media(prefers-color-scheme:dark){:root{color:#FFFFFF}}</style><title>FORJA symbol</title>
+  <path fill="currentColor" fill-rule="evenodd" d="
+    M3 3 H106 V79
+    C106 97 84 116 55 128
+    C26 116 3 97 3 79 Z
+
+    M18 18 H92 V24
+    L76 37 H39 V53 H58 V70 H39 V103
+    C31 98 25 92 22 87
+    C19 82 18 77 18 71 Z
+
+    M72 46 H92 V78
+    C92 91 79 103 55 114
+    V96
+    C66 90 72 85 72 78 Z
+  "/>
+</svg>
