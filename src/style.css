@@ -29,9 +29,7 @@ button {
   color: inherit;
   border: 0;
   background: none;
-  transition:
-    background 0.15s,
-    color 0.15s;
+  transition: background 0.15s;
 }
 button,
 a {

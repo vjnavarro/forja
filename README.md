@@ -34,6 +34,7 @@ versión. GitHub Actions ejecuta estas pruebas antes de compilar.
 - Resumen Inicio / Hoy / Objetivo, indicador de progreso e hitos calculados desde el último registro. La meta ficticia sigue siendo 78 kg; no se calcula IMC ni se infiere un objetivo médico.
 - Biblioteca con ilustraciones FORJA, filtros y búsqueda de ejercicios.
 - Identidad oficial FORJA: logotipo SVG, paleta azul, fuente Inter alojada localmente e icono para iPhone.
+- Dashboard oscuro inspirado en el mockup, con tres imágenes de un personaje ficticio (Inicio / Hoy / Objetivo) y recorrido de montaña. Las figuras son ilustrativas y estáticas; los registros actualizan los datos, no el aspecto corporal.
 
 ## Publicar gratis en GitHub Pages
 
@@ -53,8 +54,10 @@ Las pull requests solo compilan. La publicación se realiza exclusivamente desde
 - `src/components/`: dashboard, semana, biblioteca, registro y marca.
 - `src/assets/brand/`: maestros SVG oficiales, sin redibujar.
 - `public/images/exercises/`: tres ilustraciones WebP usadas en la biblioteca.
+- `public/images/transformation/`: secuencia ficticia de tres etapas y paisaje de montaña, optimizados a WebP.
 - `src/tokens.css`: paleta y variables visuales compartidas.
 - `src/style.css`: diseño responsive y navegación móvil con safe area de iPhone.
+- `src/dashboard.css`: composición oscura del dashboard, figuras e hitos sobre el paisaje.
 - `docs/brand.md`: procedencia de recursos y alcance de la integración visual.
 
 Firebase **no está conectado**: no hay SDK, configuración, credenciales ni peticiones a Authentication o Firestore. Para una futura integración Spark, reemplazar el adaptador local por una capa asíncrona de repositorios y añadir un proveedor de autenticación. Separar los datos por UID, crear reglas de seguridad y probarlas en emuladores antes de habilitar acceso real. No habilitar facturación ni servicios de pago. No subir claves privadas o archivos `.env`.

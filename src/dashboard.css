@@ -1,0 +1,793 @@
+/* The transformation view follows the dark, photographic reference. Other
+   screens retain the light FORJA interface and share the same brand masters. */
+.infographic-theme {
+  --background: #091e31;
+  --surface: #102b40;
+  --text-primary: #f7fafc;
+  --text-secondary: #becddb;
+  --border: #345266;
+  --success-text: #98edb7;
+  --success-surface: #183e34;
+  --chart-line: #7ce9a6;
+  min-height: 100vh;
+  color: var(--text-primary);
+  background: radial-gradient(ellipse at 38% 15%, #204b62 0, transparent 48%), #081c2f;
+}
+.infographic-theme .sidebar {
+  background: #071d32;
+}
+.infographic-theme .topbar {
+  border-color: #ffffff1b;
+}
+.infographic-theme .breadcrumb > span,
+.infographic-theme .mobile-brand,
+.infographic-theme footer > div > span {
+  color: var(--forja-white);
+}
+.infographic-theme .profile-mark {
+  color: var(--forja-white);
+  background: #ffffff12;
+}
+.infographic-theme .page-heading {
+  margin-top: 25px;
+  margin-bottom: 23px;
+}
+.infographic-theme h1 {
+  font-size: 38px;
+  letter-spacing: -1.5px;
+}
+.infographic-theme .page-heading .eyebrow {
+  color: #b1c7db;
+}
+.infographic-theme .overview-grid,
+.infographic-theme .detail-grid {
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+  gap: 20px;
+}
+.infographic-theme .card,
+.infographic-theme .goal-card {
+  background: linear-gradient(140deg, #122c40ef, #0a1e30f5);
+  border: 1px solid #46697c;
+  box-shadow: 0 8px 30px #00000012;
+}
+.infographic-theme .journey-card {
+  padding: 24px 23px 15px;
+  border: 1px solid #41677a;
+  background:
+    radial-gradient(ellipse at 20% 83%, #f0b1a421, transparent 32%),
+    radial-gradient(ellipse at 80% 80%, #78d7c322, transparent 40%),
+    linear-gradient(130deg, #0d263c70, #143b4d6b);
+  box-shadow: inset 0 0 70px #071d3240;
+}
+.infographic-theme .journey-heading {
+  align-items: flex-start;
+  gap: 18px;
+}
+.infographic-theme .journey-heading h2 {
+  font-size: 21px;
+  font-weight: 550;
+  margin-top: 7px;
+  letter-spacing: -0.6px;
+}
+.journey-change {
+  padding: 10px 12px;
+  text-align: center;
+  border: 1px solid #85d9a373;
+  border-radius: 10px;
+  color: #b2f5cc;
+  background: #173e33a8;
+  flex-shrink: 0;
+}
+.journey-change > strong {
+  font-size: 21px;
+  letter-spacing: -0.6px;
+  font-weight: 650;
+}
+.journey-change > span {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+}
+.infographic-theme .journey-stages {
+  gap: 10px;
+  margin-top: 14px;
+  align-items: end;
+}
+.infographic-theme .journey-stage {
+  padding: 0 0 16px;
+  background: none;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.body-figure {
+  width: min(100%, 170px);
+  aspect-ratio: 1 / 2;
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  position: relative;
+  z-index: 1;
+}
+.stage-platform {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 9px;
+  height: 19px;
+  border: 1px solid #e9b1a3;
+  border-radius: 50%;
+  background: #f0ac9415;
+  box-shadow: 0 0 20px #e9b1a335;
+}
+.today .stage-platform {
+  border-color: #78e8e2;
+  background: #78e8e21a;
+  box-shadow: 0 0 20px #78e8e235;
+}
+.finish .stage-platform {
+  border-color: #b5e59c;
+  background: #b5e59c1a;
+  box-shadow: 0 0 20px #b5e59c35;
+}
+.stage-label {
+  position: relative;
+  z-index: 2;
+  margin-top: -65px;
+  padding: 10px 8px;
+  width: 86%;
+  max-width: 175px;
+  text-align: center;
+  background: #1d2a32cc;
+  border: 1px solid #d5b1a699;
+  border-radius: 10px;
+  backdrop-filter: blur(7px);
+}
+.today .stage-label {
+  border-color: #73e3e0b8;
+  background: #0c3944cf;
+}
+.finish .stage-label {
+  border-color: #b3e399b8;
+  background: #264537cf;
+}
+.infographic-theme .journey-stage p {
+  color: var(--forja-white);
+  font-size: 13px;
+  font-weight: 550;
+}
+.infographic-theme .journey-stage strong {
+  color: var(--forja-white);
+  font-size: 29px;
+  margin: 3px 0;
+  letter-spacing: -0.7px;
+}
+.infographic-theme .journey-stage strong small {
+  font-size: 12px;
+  color: var(--forja-white);
+}
+.infographic-theme .stage-detail {
+  color: #e1eaf0;
+  font-size: 9px;
+  white-space: normal;
+  line-height: 1.6;
+}
+.infographic-theme .stage-arrow {
+  right: -15px;
+  top: 55%;
+  width: 26px;
+  height: 26px;
+  color: #9bedcf;
+  background: transparent;
+  stroke-width: 3;
+  padding: 0;
+}
+.infographic-theme .journey-footnote {
+  color: #cfdee9;
+  font-size: 9px;
+  line-height: 1.7;
+  margin-top: 12px;
+  align-items: flex-start;
+}
+.infographic-theme .journey-footnote .status-dot {
+  margin-top: 6px;
+}
+.infographic-theme .goal-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px;
+}
+.infographic-theme .goal-card .section-head {
+  width: 100%;
+  margin-bottom: auto;
+}
+.infographic-theme .goal-card .section-head h2 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+.infographic-theme .goal-gauge {
+  width: min(100%, 285px);
+  margin: 20px auto 3px;
+}
+.infographic-theme .gauge-track {
+  stroke-width: 17px;
+}
+.infographic-theme .gauge-progress {
+  stroke: #7be7a5;
+  stroke-width: 17px;
+}
+.infographic-theme .gauge-value {
+  inset: 44% 0 0;
+}
+.infographic-theme .gauge-value > strong {
+  font-size: 61px;
+}
+.infographic-theme .gauge-value small {
+  font-size: 35px;
+}
+.infographic-theme .gauge-value > span {
+  font-size: 11px;
+  margin-top: 6px;
+}
+.infographic-theme .goal-caption {
+  font-size: 11px;
+  margin: 10px 0 25px;
+}
+.infographic-theme .goal-details {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 20px;
+  gap: 12px;
+}
+.infographic-theme .goal-details > div {
+  border: 1px solid #ffffff2b;
+  background: #ffffff06;
+  padding: 12px 9px;
+  border-radius: 10px;
+  flex-direction: row;
+}
+.infographic-theme .goal-details > div:first-child {
+  background: #82e89f0d;
+  border-color: #90d5a561;
+}
+.infographic-theme .goal-details span {
+  font-size: 10px;
+}
+.infographic-theme .goal-details strong {
+  font-size: 22px;
+}
+.infographic-theme .section-head h2 {
+  font-size: 18px;
+}
+.infographic-theme .section-head .eyebrow {
+  color: #b7cddd;
+}
+.infographic-theme .weight-chart {
+  height: 215px;
+}
+.infographic-theme .chart-footer i {
+  background: var(--chart-line);
+}
+.infographic-theme .change-badge {
+  font-size: 10px;
+}
+.infographic-theme .milestone-list li {
+  padding: 15px 10px;
+}
+.infographic-theme .milestone-list strong {
+  font-size: 18px;
+}
+.infographic-theme .milestone-list p {
+  font-size: 10px;
+}
+.infographic-theme .milestone-distance {
+  font-size: 10px;
+}
+.infographic-theme .milestone-marker {
+  background: #142f43;
+  border-color: #a0afbb;
+}
+.infographic-theme .milestone-list .reached .milestone-marker {
+  color: #9cf0b8;
+  background: #204e3c;
+}
+.infographic-theme .milestone-list .next {
+  background: #8a6b2038;
+  border: 1px solid #d9bc5e96;
+}
+.infographic-theme .milestone-list .next .milestone-marker {
+  border-color: #e9cd6f;
+  background: #e9cd6f;
+  box-shadow: inset 0 0 0 5px #253540;
+}
+.infographic-theme .milestone-list .next .milestone-distance {
+  color: #ffe59a;
+}
+.infographic-theme .milestone-note {
+  font-size: 11px;
+}
+.infographic-theme .journey-trail {
+  min-height: 230px;
+  padding: 25px 28px;
+  grid-template-columns: 1fr 1.8fr;
+  gap: 30px;
+  background-image:
+    linear-gradient(90deg, #071c2eef 0%, #071c2e8c 40%, #071c2e0a), var(--trail-image);
+  background-size: cover;
+  background-position: center 67%;
+  border-color: #496d81;
+  overflow: hidden;
+}
+.infographic-theme .journey-trail h2 {
+  font-size: 30px;
+  color: var(--forja-white);
+  line-height: 1.25;
+  letter-spacing: -0.9px;
+}
+.infographic-theme .journey-trail .eyebrow {
+  color: #c1d8e9;
+}
+.infographic-theme .journey-trail p {
+  color: #d2e0e9;
+  max-width: 220px;
+  font-size: 11px;
+}
+.infographic-theme .trail-stops {
+  width: 100%;
+  max-width: none;
+  min-height: 145px;
+  align-items: start;
+  gap: 10px;
+  padding-top: 73px;
+}
+.infographic-theme .trail-stops::before {
+  display: none;
+}
+.trail-path {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 120px;
+  z-index: 0;
+  overflow: visible;
+}
+.trail-path path {
+  fill: none;
+  stroke: #f2e1a8;
+  stroke-width: 2;
+  stroke-dasharray: 12 9;
+  vector-effect: non-scaling-stroke;
+}
+.infographic-theme .trail-stops li:nth-of-type(2) {
+  transform: translateY(-18px);
+}
+.infographic-theme .trail-stops li:nth-of-type(3) {
+  transform: translateY(-37px);
+}
+.infographic-theme .trail-stops li:nth-of-type(4) {
+  transform: translateY(-56px);
+}
+.infographic-theme .trail-stops li:nth-of-type(5) {
+  transform: translateY(-73px);
+}
+.infographic-theme .trail-stops li > span {
+  background: #17384b;
+  border-color: #c2d9e3;
+  color: #d6e5ed;
+  box-shadow: 0 0 0 5px #0c2b3e9e;
+}
+.infographic-theme .trail-stops .reached > span {
+  border-color: #8cdda3;
+  background: #205138;
+  color: #b9f9cc;
+}
+.infographic-theme .trail-stops .next > span {
+  border-color: #ffe490;
+  color: #ffe490;
+  background: #6a591f;
+}
+.infographic-theme .trail-stops li:last-of-type > span {
+  border-color: #d3bbff;
+  background: #453466;
+  color: #e8d8ff;
+}
+.infographic-theme .trail-stops strong {
+  color: var(--forja-white);
+  font-size: 12px;
+  text-shadow: 0 2px 6px #000;
+}
+.infographic-theme .trail-stops small {
+  color: #e1eaf0;
+  font-size: 9px;
+}
+.infographic-theme .weekly-summary .text-button {
+  color: #a0c7ff;
+}
+.infographic-theme .activity-goal .type-icon {
+  background: #ffffff0d;
+  color: #b7d5f1;
+}
+.infographic-theme .track {
+  background: #ffffff14;
+}
+.infographic-theme .track i {
+  background: #8ebdff;
+}
+.infographic-theme .activity-goal p {
+  color: var(--text-secondary);
+}
+.infographic-theme .weight-dialog {
+  --text-primary: #f7fafc;
+  --text-secondary: #becddb;
+}
+.infographic-theme .weight-input input {
+  color: var(--forja-white);
+}
+.infographic-theme .form-error {
+  color: #ffb4b4;
+}
+.infographic-theme .notice {
+  background: #1b3c55;
+  border-color: #52758e;
+}
+.infographic-theme .neutral {
+  background: #203d52;
+  color: #e0eaf2;
+}
+.infographic-theme .mobile-nav {
+  background: #10283bf5;
+  border-color: #416279;
+}
+.infographic-theme .mobile-nav button {
+  color: #b7c8d8;
+}
+.infographic-theme .mobile-nav button.active {
+  background: #234761;
+  color: #e4f1ff;
+}
+.infographic-theme footer .brand-symbol {
+  color: var(--forja-white);
+}
+
+@media (max-width: 1190px) {
+  .infographic-theme .overview-grid,
+  .infographic-theme .detail-grid {
+    grid-template-columns: minmax(0, 1.7fr) minmax(265px, 1fr);
+    gap: 16px;
+  }
+  .infographic-theme .journey-card {
+    padding: 21px 18px 14px;
+  }
+  .infographic-theme .journey-heading h2 {
+    font-size: 18px;
+  }
+  .journey-change {
+    padding: 9px;
+  }
+  .journey-change > strong {
+    font-size: 18px;
+  }
+  .journey-change > span {
+    font-size: 8px;
+  }
+  .infographic-theme .goal-card {
+    padding: 23px 18px;
+  }
+  .infographic-theme .goal-card .section-head h2 {
+    font-size: 15px;
+  }
+  .infographic-theme .goal-details > div {
+    gap: 7px;
+    padding: 10px 7px;
+  }
+  .infographic-theme .goal-details > div > svg {
+    width: 15px;
+  }
+  .infographic-theme .goal-details span {
+    font-size: 8px;
+  }
+  .infographic-theme .goal-details strong {
+    font-size: 19px;
+  }
+  .infographic-theme .milestone-distance {
+    font-size: 9px;
+  }
+}
+@media (max-width: 1000px) {
+  .infographic-theme .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .infographic-theme .body-figure {
+    width: min(100%, 170px);
+  }
+  .infographic-theme .goal-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0 25px;
+  }
+  .infographic-theme .goal-card .section-head {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .infographic-theme .goal-gauge {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    width: min(100%, 250px);
+    margin: 0 auto;
+  }
+  .infographic-theme .goal-caption {
+    grid-column: 2;
+    margin: 14px 0;
+  }
+  .infographic-theme .goal-details {
+    grid-column: 2;
+    margin: 0;
+  }
+  .infographic-theme .gauge-value > strong {
+    font-size: 52px;
+  }
+  .infographic-theme .gauge-value > span {
+    font-size: 10px;
+  }
+  .infographic-theme .journey-trail {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 26px;
+  }
+  .infographic-theme .journey-trail p {
+    max-width: none;
+  }
+  .infographic-theme .trail-stops {
+    max-width: 680px;
+  }
+}
+@media (max-width: 800px) {
+  .infographic-theme .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .infographic-theme .milestone-list {
+    display: block;
+  }
+  .infographic-theme .milestone-list li:not(:last-child)::after {
+    display: block;
+    left: 20px;
+  }
+  .infographic-theme .journey-heading {
+    gap: 10px;
+  }
+  .infographic-theme .journey-heading h2 {
+    font-size: 18px;
+  }
+  .infographic-theme .goal-details {
+    gap: 8px;
+  }
+  .infographic-theme .goal-details > div {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .infographic-theme .gauge-value > strong {
+    font-size: 44px;
+  }
+  .infographic-theme .gauge-value small {
+    font-size: 27px;
+  }
+  .infographic-theme .gauge-value > span {
+    font-size: 9px;
+  }
+}
+@media (max-width: 600px) {
+  .infographic-theme h1 {
+    font-size: 31px;
+  }
+  .infographic-theme .page-heading {
+    margin: 26px 0 23px;
+  }
+  .infographic-theme .journey-card {
+    padding: 21px 13px 14px;
+  }
+  .infographic-theme .journey-heading {
+    display: block;
+  }
+  .infographic-theme .journey-heading h2 {
+    font-size: 19px;
+    margin-top: 7px;
+  }
+  .journey-change {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 9px;
+    margin-top: 13px;
+    border-radius: 7px;
+  }
+  .journey-change > strong {
+    font-size: 16px;
+  }
+  .journey-change > span {
+    font-size: 9px;
+    margin: 0;
+  }
+  .infographic-theme .journey-stages {
+    gap: 4px;
+    margin-top: 15px;
+  }
+  .infographic-theme .journey-stage {
+    padding: 0 0 13px;
+  }
+  .infographic-theme .body-figure {
+    width: 100%;
+  }
+  .stage-label {
+    width: 95%;
+    padding: 8px 4px;
+    margin-top: -34px;
+    border-radius: 7px;
+  }
+  .infographic-theme .journey-stage p {
+    font-size: 11px;
+  }
+  .infographic-theme .journey-stage strong {
+    font-size: 23px;
+    margin: 4px 0;
+    letter-spacing: -0.8px;
+  }
+  .infographic-theme .journey-stage strong small {
+    font-size: 9px;
+  }
+  .infographic-theme .stage-detail {
+    font-size: 8px;
+  }
+  .stage-platform {
+    left: 2%;
+    right: 2%;
+    bottom: 6px;
+    height: 15px;
+  }
+  .infographic-theme .stage-arrow {
+    width: 15px;
+    height: 20px;
+    right: -10px;
+    top: 43%;
+    z-index: 3;
+  }
+  .infographic-theme .journey-footnote {
+    font-size: 8px;
+    line-height: 1.7;
+    margin-top: 10px;
+    gap: 5px;
+  }
+  .infographic-theme .goal-card {
+    padding: 21px;
+    gap: 0 17px;
+  }
+  .infographic-theme .goal-card .section-head {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 0 0 14px;
+  }
+  .infographic-theme .goal-card .section-head h2 {
+    font-size: 16px;
+  }
+  .infographic-theme .goal-gauge {
+    grid-row: 2 / 4;
+    grid-column: 1;
+  }
+  .infographic-theme .goal-caption {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 9px;
+    line-height: 1.7;
+    margin: 5px 0 10px;
+  }
+  .infographic-theme .goal-details {
+    grid-row: 3;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding-top: 0;
+    border: 0;
+  }
+  .infographic-theme .goal-details > div {
+    flex-direction: row;
+    padding: 9px 6px;
+    gap: 6px;
+  }
+  .infographic-theme .goal-details > div > svg {
+    width: 15px;
+  }
+  .infographic-theme .goal-details span {
+    font-size: 8px;
+  }
+  .infographic-theme .goal-details strong {
+    font-size: 16px;
+  }
+  .infographic-theme .gauge-value {
+    top: 41%;
+  }
+  .infographic-theme .gauge-value > strong {
+    font-size: 37px;
+  }
+  .infographic-theme .gauge-value small {
+    font-size: 23px;
+  }
+  .infographic-theme .gauge-value > span {
+    font-size: 8px;
+    line-height: 1.6;
+    margin-top: 7px;
+  }
+  .infographic-theme .section-head h2 {
+    font-size: 17px;
+  }
+  .infographic-theme .weight-chart {
+    height: 215px;
+  }
+  .infographic-theme .chart-summary {
+    gap: 10px;
+  }
+  .infographic-theme .change-badge {
+    font-size: 8px;
+  }
+  .infographic-theme .milestone-list strong {
+    font-size: 18px;
+  }
+  .infographic-theme .milestone-list p,
+  .infographic-theme .milestone-distance {
+    font-size: 10px;
+  }
+  .infographic-theme .journey-trail {
+    padding: 25px 19px 18px;
+    gap: 35px;
+    min-height: 300px;
+    background-position: 70% center;
+  }
+  .infographic-theme .journey-trail h2 {
+    font-size: 28px;
+    max-width: 210px;
+  }
+  .infographic-theme .journey-trail p {
+    font-size: 11px;
+    line-height: 1.8;
+  }
+  .infographic-theme .trail-stops {
+    gap: 6px;
+  }
+  .infographic-theme .trail-stops li > span {
+    width: 28px;
+    height: 28px;
+  }
+  .infographic-theme .trail-stops strong {
+    font-size: 9px;
+  }
+  .infographic-theme .trail-stops small {
+    font-size: 8px;
+  }
+}
+@media (max-width: 360px) {
+  .infographic-theme h1 {
+    font-size: 28px;
+  }
+  .infographic-theme .journey-stage strong {
+    font-size: 21px;
+  }
+  .infographic-theme .stage-detail {
+    font-size: 7px;
+  }
+  .infographic-theme .goal-card {
+    padding: 20px 16px;
+    gap: 0 12px;
+  }
+  .infographic-theme .gauge-value > strong {
+    font-size: 32px;
+  }
+  .infographic-theme .gauge-value small {
+    font-size: 20px;
+  }
+  .infographic-theme .gauge-value > span {
+    font-size: 7px;
+  }
+}

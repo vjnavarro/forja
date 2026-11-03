@@ -4,9 +4,7 @@ import {
   Check,
   ChevronRight,
   Flag,
-  Footprints,
   Plus,
-  Route,
   Target,
   Trophy,
 } from 'lucide-react';
@@ -22,21 +20,27 @@ import {
 } from 'recharts';
 import { formatNumber, formatWeight, getProgress, initialWeight, targetWeight } from '../progress';
 import { sessions } from '../demo';
-import { Brand } from './Brand';
 import { ActivityGoals } from './ActivityGoals';
 
-function Journey({ current }) {
+function Journey({ metrics }) {
+  const { current, lost, percentChange } = metrics;
   return (
     <section className="journey-card" aria-labelledby="journey-title">
-      <Brand compact className="journey-watermark" />
       <div className="journey-heading">
         <div>
-          <span className="eyebrow">TU TRANSFORMACIÓN</span>
-          <h2 id="journey-title">Un camino que construyes tú.</h2>
+          <span className="eyebrow">TU EVOLUCIÓN, PASO A PASO</span>
+          <h2 id="journey-title">Tres etapas. Un mismo camino.</h2>
         </div>
-        <span className="journey-badge">
-          <Route size={14} /> Paso a paso
-        </span>
+        <div className="journey-change">
+          <strong>
+            {lost < 0 ? '+' : '−'}
+            {formatWeight(Math.abs(lost))}
+          </strong>
+          <span>
+            {lost < 0 ? '+' : '−'}
+            {formatNumber(Math.abs(percentChange))}% desde el inicio
+          </span>
+        </div>
       </div>
       <div className="journey-stages">
         {[
@@ -44,42 +48,47 @@ function Journey({ current }) {
             label: 'Inicio',
             value: initialWeight,
             detail: 'Tu punto de partida',
-            icon: Footprints,
             className: 'start',
           },
           {
             label: 'Hoy',
             value: current,
             detail: 'Tu último registro',
-            icon: Route,
             className: 'today',
           },
           {
             label: 'Objetivo',
             value: targetWeight,
             detail: 'Tu meta de demo',
-            icon: Flag,
             className: 'finish',
           },
-        ].map(({ label, value, detail, icon: Icon, className }, index) => (
+        ].map(({ label, value, detail, className }, index) => (
           <div className={`journey-stage ${className}`} key={label}>
-            <div className="stage-top">
-              <span>0{index + 1}</span>
-              <Icon size={24} strokeWidth={1.4} />
+            <div
+              className="body-figure"
+              role="img"
+              aria-label={`Mismo personaje adulto ficticio, etapa ${label.toLowerCase()}. Representación ilustrativa.`}
+              style={{
+                backgroundImage: `url(${import.meta.env.BASE_URL}images/transformation/forja-stages.webp)`,
+                backgroundPosition: `${index * 50}% center`,
+              }}
+            />
+            <div className="stage-platform" aria-hidden="true" />
+            <div className="stage-label">
+              <p>{label}</p>
+              <strong>
+                {formatNumber(value)}
+                <small> kg</small>
+              </strong>
+              <span className="stage-detail">{detail}</span>
             </div>
-            <div className="stage-line" />
-            <p>{label}</p>
-            <strong>
-              {formatNumber(value)}
-              <small> kg</small>
-            </strong>
-            <span className="stage-detail">{detail}</span>
             {index < 2 && <ChevronRight className="stage-arrow" size={18} />}
           </div>
         ))}
       </div>
       <div className="journey-footnote">
-        <span className="status-dot" /> Datos ficticios · Un ejemplo para explorar tu progreso
+        <span className="status-dot" /> Personaje ficticio · Aspecto ilustrativo, no predictivo. Los
+        registros actualizan los datos, no las figuras.
       </div>
     </section>
   );
@@ -181,8 +190,16 @@ function WeightChart({ records, metrics, onRegister }) {
           >
             <defs>
               <linearGradient id="weight-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--forja-secondary)" stopOpacity={0.16} />
-                <stop offset="100%" stopColor="var(--forja-secondary)" stopOpacity={0.01} />
+                <stop
+                  offset="0%"
+                  stopColor="var(--chart-line, var(--forja-secondary))"
+                  stopOpacity={0.24}
+                />
+                <stop
+                  offset="100%"
+                  stopColor="var(--chart-line, var(--forja-secondary))"
+                  stopOpacity={0.01}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 5" vertical={false} />
@@ -227,7 +244,7 @@ function WeightChart({ records, metrics, onRegister }) {
             <Area
               type="linear"
               dataKey="kg"
-              stroke="var(--forja-secondary)"
+              stroke="var(--chart-line, var(--forja-secondary))"
               strokeWidth={2.5}
               fill="url(#weight-fill)"
               dot={{ r: 3.5, fill: 'var(--surface)', strokeWidth: 2 }}
@@ -307,15 +324,29 @@ function Milestones({ metrics }) {
 }
 
 function JourneyTrail({ metrics }) {
-  const { milestones } = metrics;
+  const { milestones, nextMilestone } = metrics;
   return (
-    <section className="journey-trail" aria-labelledby="trail-title">
+    <section
+      className="journey-trail"
+      aria-labelledby="trail-title"
+      style={{
+        '--trail-image': `url(${import.meta.env.BASE_URL}images/transformation/mountain-journey.webp)`,
+      }}
+    >
       <div>
         <span className="eyebrow">PERSPECTIVA PARA SEGUIR</span>
         <h2 id="trail-title">Tu objetivo sigue ahí.</h2>
         <p>Cada registro es un paso más en tu historia.</p>
       </div>
       <ol className="trail-stops">
+        <svg
+          className="trail-path"
+          viewBox="0 0 1000 150"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path d="M 75 110 C 160 50 200 130 285 90 S 430 120 500 65 S 640 100 710 45 S 850 80 925 20" />
+        </svg>
         <li className="reached">
           <span>
             <Check size={15} />
@@ -324,7 +355,10 @@ function JourneyTrail({ metrics }) {
           <small>Inicio</small>
         </li>
         {milestones.map((milestone) => (
-          <li key={milestone.kg} className={milestone.reached ? 'reached' : ''}>
+          <li
+            key={milestone.kg}
+            className={`${milestone.reached ? 'reached' : ''} ${nextMilestone?.kg === milestone.kg ? 'next' : ''}`}
+          >
             <span>
               {milestone.reached ? (
                 <Check size={15} />
@@ -354,7 +388,7 @@ export function Dashboard({ records, completed, onRegister, onShowWeek }) {
   return (
     <div className="dashboard">
       <div className="overview-grid">
-        <Journey current={metrics.current} />
+        <Journey metrics={metrics} />
         <GoalCard metrics={metrics} />
       </div>
       <div className="detail-grid">

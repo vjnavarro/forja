@@ -22,6 +22,7 @@ import { WeekPlan } from './components/WeekPlan';
 import { ExerciseLibrary } from './components/ExerciseLibrary';
 import { WeightDialog } from './components/WeightDialog';
 import './style.css';
+import './dashboard.css';
 
 const navigation = [
   ['dashboard', 'Mi progreso', LayoutDashboard],
@@ -30,7 +31,7 @@ const navigation = [
 ];
 const headings = {
   dashboard: [
-    'Cada paso cuenta.',
+    'Mi transformación.',
     'Tu evolución, tus hábitos y tu próximo objetivo. Todo en un mismo lugar.',
   ],
   week: [
@@ -98,7 +99,7 @@ function App() {
     ));
 
   return (
-    <div className="app">
+    <div className={`app ${tab === 'dashboard' ? 'infographic-theme' : ''}`}>
       <a className="skip-link" href="#main-content">
         Saltar al contenido
       </a>

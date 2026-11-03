@@ -21,6 +21,14 @@ ficticios.
 - El favicon conserva la geometría del símbolo, con navy/blanco según el tema del
   navegador. El icono de iPhone es una rasterización del mismo símbolo, blanco
   sobre navy, a 180 × 180 px.
+- `public/images/transformation/forja-stages.webp` muestra tres etapas del mismo
+  personaje adulto ficticio, generadas para esta demo. Es una única composición
+  con transparencia que la interfaz presenta en tres marcos, sin repetir su
+  descarga. Los pesos y etiquetas son texto de la aplicación, no parte de la imagen.
+- `public/images/transformation/mountain-journey.webp` es un paisaje generado
+  para el recorrido del objetivo. La ruta y los hitos se dibujan como elementos
+  de interfaz sobre ese fondo. Ambos recursos se optimizan a WebP y suman unos
+  217 KB; la secuencia principal se precarga.
 
 El manifiesto del paquete identifica esos maestros como `APPROVED`. Las
 infografías y fichas marcadas como borradores no se han incorporado. Las imágenes
@@ -35,7 +43,12 @@ sistema metodológico completo. El ZIP no incluye el sistema de diseño canónic
 `src/design-system/forja/`; no se ha supuesto que sus componentes están disponibles.
 Los iconos de interfaz continúan usando la dependencia Lucide de esta aplicación.
 
-El dashboard no usa fotografías personales, reconstrucciones corporales ni IMC.
+El dashboard no usa fotografías personales ni IMC. Las tres figuras son una
+secuencia ilustrativa estática: no se deducen del peso, no se deforman al añadir
+registros y no predicen el aspecto de una persona. La interfaz lo indica junto
+a la secuencia. Los cambios de peso actualizan etiquetas, gráfica, porcentaje,
+distancias e hitos, manteniendo los ejemplos ficticios.
+
 El porcentaje divide el cambio desde 86,4 kg entre la distancia al objetivo
 ficticio de 78 kg y se limita al intervalo 0–100. Los hitos y el peso restante
 se recalculan con el último registro, también si el peso sube.
