@@ -1,0 +1,20 @@
+export const weights = [
+  {week:'Sem 1',kg:86.4},{week:'Sem 2',kg:85.8},{week:'Sem 3',kg:85.9},
+  {week:'Sem 4',kg:84.7},{week:'Sem 5',kg:84.2},{week:'Sem 6',kg:83.6},
+  {week:'Sem 7',kg:83.1},{week:'Sem 8',kg:82.4},
+];
+export const sessions = [
+  {id:'swim-1',day:'LUN',date:'01',type:'Natación',title:'Encuentra tu ritmo',detail:'Técnica + resistencia · 1.200 m',duration:'40 min',done:true},
+  {id:'strength-1',day:'MAR',date:'02',type:'Fuerza',title:'Construye tu base',detail:'Full body · 4 ejercicios',duration:'45 min',done:true},
+  {id:'core-1',day:'MIÉ',date:'03',type:'Core',title:'Tu centro, más fuerte',detail:'Estabilidad · 3 rondas',duration:'20 min',done:false},
+  {id:'swim-2',day:'JUE',date:'04',type:'Natación',title:'Un largo más',detail:'Resistencia · 1.500 m',duration:'45 min',done:false},
+  {id:'strength-2',day:'VIE',date:'05',type:'Fuerza',title:'Supera tu marca',detail:'Full body · 4 ejercicios',duration:'45 min',done:false},
+];
+export const exercises = [
+  {name:'Sentadilla',type:'Fuerza',detail:'3 × 12 repeticiones',query:'sentadilla técnica correcta'},
+  {name:'Remo con mancuerna',type:'Fuerza',detail:'3 × 10 por lado',query:'remo mancuerna técnica'},
+  {name:'Plancha frontal',type:'Core',detail:'3 × 30 segundos',query:'plancha frontal técnica correcta'},
+  {name:'Dead bug',type:'Core',detail:'3 × 10 por lado',query:'dead bug ejercicio técnica'},
+  {name:'Crol: respiración lateral',type:'Natación',detail:'4 × 50 metros · suave',query:'natación crol respiración lateral técnica'},
+  {name:'Patada con tabla',type:'Natación',detail:'4 × 25 metros',query:'natación patada crol tabla técnica'},
+];
