@@ -1,7 +1,8 @@
 # Activar Firebase Spark y el módulo privado
 
-Esta guía requiere una cuenta Google con permisos sobre el proyecto. La máquina
-de desarrollo no tiene un proyecto ni una identidad de administrador conectados.
+Esta guía requiere una cuenta Google con permisos sobre el proyecto. El propietario
+ha creado `forja-vjnh393t` en Spark y facilitado su configuración web pública.
+La máquina de desarrollo no tiene una identidad de administrador conectada.
 No envíes contraseñas ni archivos de cuenta de servicio por chat.
 
 ## Crear y configurar
@@ -41,16 +42,21 @@ VITE_FIREBASE_AUTH_DOMAIN
 VITE_FIREBASE_APP_ID
 ```
 
-Rellénalos en `.env.local` para desarrollo con el proyecto real. En GitHub usa
-Settings → Secrets and variables → Actions → **Variables**, con esos nombres.
-El workflow los incorpora durante `npm run build`. El archivo `.env.example`
-no debe contener valores de administrador, correos de miembros ni datos de salud.
+Rellénalos en `.env.local` para desarrollo con el proyecto real. El workflow de
+Pages incorpora por defecto la configuración web pública de `forja-vjnh393t`;
+no hace falta introducir variables manualmente para ese proyecto. Para sustituirla,
+configura los cuatro valores en GitHub Settings → Secrets and variables → Actions
+→ **Variables**, con esos nombres. Cambia los cuatro juntos para mantenerlos
+asociados al mismo proyecto. El workflow los incorpora durante `npm run build`.
+El archivo `.env.example` no debe contener valores de administrador, correos de
+miembros ni datos de salud.
 
 Las claves web de Firebase no son credenciales de administración y quedan visibles
 en el JavaScript del navegador. Su seguridad depende de las reglas desplegadas y
-los dominios autorizados. Si una variable falta, el acceso privado permanece
-cerrado. Los valores de configuración del entorno Codex no se copian por sí solos
-a las variables de GitHub; hay que configurar ambos lugares si ambos se utilizan.
+los dominios autorizados. Si una compilación no recibe los cuatro valores, el
+acceso privado permanece cerrado. Los valores del entorno Codex no se copian por sí solos
+a las variables de GitHub. La configuración web no activa el proveedor Google,
+crea Firestore ni publica sus reglas: esos pasos de consola siguen siendo necesarios.
 
 ## Validar antes de usar datos reales
 

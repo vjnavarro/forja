@@ -33,8 +33,10 @@ No hacen falta Cloud Functions, Cloud Storage, Blaze ni una clave de servicio en
 el navegador.
 
 Para desarrollo con un proyecto real, copia `.env.example` a `.env.local` y rellena
-los cuatro valores de configuración web. Para Pages, configura esas mismas cuatro
-variables en GitHub **Settings → Secrets and variables → Actions → Variables**.
+los cuatro valores de configuración web. Para Pages, el workflow incluye la
+configuración pública del proyecto `forja-vjnh393t` facilitada por su propietario.
+Puedes sustituir los cuatro valores mediante GitHub **Settings → Secrets and
+variables → Actions → Variables**.
 La configuración web de Firebase es pública; la autorización depende de las
 reglas, no de ocultar esos valores. Nunca incluyas claves de administrador.
 
