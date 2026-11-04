@@ -5,7 +5,13 @@ export default defineConfig({
   esbuild: { jsx: 'automatic' },
   build: {
     rollupOptions: {
-      output: { manualChunks: { charts: ['recharts'] } },
+      output: {
+        manualChunks: {
+          charts: ['recharts'],
+          'firebase-auth': ['firebase/auth'],
+          'firebase-data': ['firebase/firestore'],
+        },
+      },
     },
   },
 });
