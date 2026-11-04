@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "ownerEmail": "one@example.test",
+  "profile": {"title":"Seguimiento sintético","initialWeight":90,"targetWeight":70,"startDate":"2025-01-01","dietStartDate":"2025-01-05","heightCm":180,"sex":"male","avatar":"male","weeklyGoals":{"swim":2,"swimMax":3,"strength":0,"core":1}},
+  "weights": [
+    {"date":"2025-01-01","kg":90,"status":"confirmed","note":"Dato sintético"},
+    {"date":"2025-01-10","kg":87.5,"status":"reference","note":"Referencia sintética"},
+    {"date":"2025-01-10","kg":86.5,"status":"spot","note":"Lectura puntual de prueba"},
+    {"date":"2025-02-01","kg":83.2,"status":"confirmed","note":""}
+  ],
+  "sessions": [],
+  "healthContext": {"activityNotes":"Ejemplo sintético.","treatmentNotes":"No hay tratamiento real.","lumbarNotes":"Contexto sintético de prueba.","medicalNotes":"Sin pauta clínica real.","sourceNotes":"Datos ficticios para pruebas locales."}
+}

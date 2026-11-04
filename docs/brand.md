@@ -1,61 +1,48 @@
-# Identidad visual de FORJA · Mi Transformación
+# Identidad visual FORJA
 
-Esta aplicación utiliza recursos del paquete `assets.zip` aportado por el
-propietario del proyecto. La referencia visual es el dashboard de transformación
-con Inicio / Hoy / Objetivo, gráfica, progreso e hitos, adaptado a la identidad
-FORJA y a pantallas móviles. Todos los datos de la aplicación siguen siendo
-ficticios.
+El portal utiliza los recursos del paquete `assets.zip` aportado por el
+propietario del proyecto. Mi Transformación sigue la composición del mockup:
+Inicio / Actual / Objetivo, gráfica, progreso, hitos y recorrido de montaña.
+La información de cada cuenta se obtiene de Firestore y nunca se incluye en
+las imágenes o en los archivos públicos.
 
-## Recursos incorporados
+## Recursos
 
-- Las tres copias SVG de `assets/brand/master/` se conservan sin cambios en
-  `src/assets/brand/`. El logo se renderiza en línea para utilizar `currentColor`.
-- La paleta de marca de `assets/brand/tokens.md` se recoge en `src/tokens.css`,
-  con variables adicionales para superficies, contraste y estados de interfaz.
-- Inter variable, subconjunto latino con soporte de español, se sirve localmente
-  desde `@fontsource-variable/inter`. Su licencia SIL OFL se entrega en
-  `public/brand/Inter-OFL.txt`.
-- Se incluyen únicamente las ilustraciones maestras de EX-002 (sentadilla goblet),
-  EX-012 (remo con mancuerna) y EX-013 (plancha frontal), como WebP en
-  `public/images/exercises/`. El resto del paquete no aumenta la descarga de la web.
-- El favicon conserva la geometría del símbolo, con navy/blanco según el tema del
-  navegador. El icono de iPhone es una rasterización del mismo símbolo, blanco
-  sobre navy, a 180 × 180 px.
-- `public/images/transformation/forja-stages.webp` muestra tres etapas del mismo
-  personaje adulto ficticio, generadas para esta demo. Es una única composición
-  con transparencia que la interfaz presenta en tres marcos, sin repetir su
-  descarga. Los pesos y etiquetas son texto de la aplicación, no parte de la imagen.
-- `public/images/transformation/mountain-journey.webp` es un paisaje generado
-  para el recorrido del objetivo. La ruta y los hitos se dibujan como elementos
-  de interfaz sobre ese fondo. Ambos recursos se optimizan a WebP y suman unos
-  217 KB; la secuencia principal se precarga.
+- Los tres SVG de `src/assets/brand/` mantienen los bytes originales. Se renderizan
+  en línea para utilizar `currentColor`, sin redibujar el escudo o el wordmark.
+- `src/tokens.css` recoge la paleta oficial navy/azul, con variables adicionales
+  de superficies y contraste. El dashboard usa superficies oscuras y verde para
+  la evolución; el portal y las demás vistas mantienen superficies claras.
+- Inter variable, subconjunto latino, se sirve con la aplicación; su licencia
+  SIL OFL está en `public/brand/Inter-OFL.txt`.
+- EX-002, EX-012 y EX-013 se incorporan como ilustraciones maestras WebP a la
+  biblioteca. El manifiesto aportado las identifica como `APPROVED`. No se han
+  incorporado infografías que estuvieran marcadas como borradores.
+- `forja-stages.webp` y `forja-stages-female.webp`, en
+  `public/images/transformation/`, son composiciones generadas de personajes
+  adultos ficticios. Cada archivo contiene tres etapas de la misma identidad;
+  CSS presenta cada tercio sin repetir la descarga. Hay también un avatar neutro.
+- `mountain-journey.webp` es un paisaje generado. La ruta, los hitos y las cifras
+  son elementos de interfaz superpuestos; no son texto incrustado en la imagen.
+- Favicon e icono de iPhone derivan del símbolo oficial y conservan su geometría.
 
-El manifiesto del paquete identifica esos maestros como `APPROVED`. Las
-infografías y fichas marcadas como borradores no se han incorporado. Las imágenes
-ilustran movimientos; las repeticiones siguen siendo los ejemplos de la demo,
-no una prescripción personal.
+Los personajes son ilustrativos y estáticos: no se deducen de las mediciones ni
+predicen el aspecto futuro de una persona. La interfaz lo explica junto a las
+figuras. La selección de figura no interviene en cálculos clínicos ni prescribe
+un objetivo.
 
 ## Alcance
 
-Se comparte la identidad con el proyecto general FORJA. No se importa su
-descriptor sobre jóvenes deportistas ni se presenta esta aplicación como el
-sistema metodológico completo. El ZIP no incluye el sistema de diseño canónico
-`src/design-system/forja/`; no se ha supuesto que sus componentes están disponibles.
-Los iconos de interfaz continúan usando la dependencia Lucide de esta aplicación.
+Se comparte la identidad con FORJA general, sin trasladar automáticamente su
+descriptor sobre jóvenes deportistas a este módulo de seguimiento personal.
+El ZIP no incluía los componentes canónicos `src/design-system/forja/`; la
+iconografía funcional continúa utilizando Lucide.
 
-El dashboard no usa fotografías personales ni IMC. Las tres figuras son una
-secuencia ilustrativa estática: no se deducen del peso, no se deforman al añadir
-registros y no predicen el aspecto de una persona. La interfaz lo indica junto
-a la secuencia. Los cambios de peso actualizan etiquetas, gráfica, porcentaje,
-distancias e hitos, manteniendo los ejemplos ficticios.
+El progreso y los hitos se calculan según el perfil y los pesajes de referencia
+de cada transformación. El IMC es opcional y orientativo, solo si el usuario
+ha indicado una altura. El modo incógnito retira las cifras, las gráficas y los
+detalles privados de la interfaz; no altera las imágenes ilustrativas.
 
-El porcentaje divide el cambio desde 86,4 kg entre la distancia al objetivo
-ficticio de 78 kg y se limita al intervalo 0–100. Los hitos y el peso restante
-se recalculan con el último registro, también si el peso sube.
-
-La clave `forja.demo.v1` se conserva para respetar registros anteriores.
-Los registros inválidos se descartan al leerlos, sin bloquear el arranque; las
-sesiones desconocidas y duplicadas no alteran los objetivos semanales.
-
-GitHub Pages mantiene la base `/forja/`, que se aplica también a fuentes,
-imágenes e iconos. No se conecta Firebase ni se añaden servicios de pago.
+Los adaptadores de la antigua demo local no se utilizan en el portal privado:
+no se importa automáticamente su almacenamiento ni se mezcla con una cuenta
+Google. Los únicos fixtures incluidos son sintéticos y se emplean en pruebas.

@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function googleUser() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function member() {
+      return googleUser()
+        && exists(/databases/$(database)/documents/members/$(request.auth.token.email.lower()))
+        && get(/databases/$(database)/documents/members/$(request.auth.token.email.lower())).data.enabled == true;
+    }
+    function owner(uid) { return member() && request.auth.uid == uid; }
+    function validDate(value) { return value is string && value.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'); }
+    function validWeight(value) { return value is number && value >= 30 && value <= 350; }
+    function shortText(value,max) {return value is string && value.size() <= max;}
+    function goal(value) {return value is int && value >= 0 && value <= 14;}
+    function profile(uid) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['ownerUid','title','initialWeight','targetWeight','startDate','dietStartDate','heightCm','sex','avatar','weeklyGoals','createdAt','updatedAt'])
+        && d.keys().hasAll(['ownerUid','title','initialWeight','targetWeight','startDate','dietStartDate','heightCm','sex','avatar','weeklyGoals','createdAt','updatedAt'])
+        && d.ownerUid == uid && shortText(d.title,60) && d.title.size() > 0
+        && validWeight(d.initialWeight) && validWeight(d.targetWeight) && d.initialWeight != d.targetWeight
+        && validDate(d.startDate) && (d.dietStartDate == '' || (validDate(d.dietStartDate) && d.dietStartDate >= d.startDate))
+        && (d.heightCm == null || (d.heightCm is number && d.heightCm >= 100 && d.heightCm <= 250))
+        && d.sex in ['male','female','unspecified'] && d.avatar in ['male','female','neutral']
+        && d.weeklyGoals is map && d.weeklyGoals.keys().hasOnly(['swim','swimMax','strength','core'])
+        && goal(d.weeklyGoals.swim) && goal(d.weeklyGoals.swimMax) && d.weeklyGoals.swimMax >= d.weeklyGoals.swim
+        && goal(d.weeklyGoals.strength) && goal(d.weeklyGoals.core)
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function parentOwner(uid,tid) {return getAfter(/databases/$(database)/documents/users/$(uid)/transformations/$(tid)).data.ownerUid == uid;}
+    function weight() {
+      let d=request.resource.data;
+      return d.keys().hasOnly(['date','kg','status','note','createdAt','updatedAt'])
+        && d.keys().hasAll(['date','kg','status','note','createdAt','updatedAt'])
+        && validDate(d.date) && validWeight(d.kg) && d.status in ['confirmed','reference','spot']
+        && shortText(d.note,500) && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function exercise(value) {
+      let name = value.name;
+      let sets = value.sets;
+      let repetitions = value.repetitions;
+      return value is map && value.keys().hasOnly(['name','sets','repetitions'])
+        && name is string && name.size() > 0 && name.size() <= 80
+        && sets is int && sets >= 0 && sets <= 100
+        && repetitions is string && repetitions.size() > 0 && repetitions.size() <= 40;
+    }
+    function exerciseAt(items,index) { return items.size() <= index || exercise(items[index]); }
+    function session() {
+      let d=request.resource.data;
+      let items=d.exercises;
+      return d.keys().hasOnly(['date','type','completed','minutes','distance','exercises','discomfort','notes','createdAt','updatedAt'])
+        && d.keys().hasAll(['date','type','completed','minutes','distance','exercises','discomfort','notes','createdAt','updatedAt'])
+        && validDate(d.date) && d.type in ['swim','strength','core'] && d.completed is bool
+        && (d.minutes == null || (d.minutes is number && d.minutes >= 0 && d.minutes <= 1440))
+        && (d.distance == null || (d.distance is number && d.distance >= 0 && d.distance <= 100000))
+        && items is list && items.size() <= 6
+        && exerciseAt(items,0) && exerciseAt(items,1) && exerciseAt(items,2) && exerciseAt(items,3) && exerciseAt(items,4) && exerciseAt(items,5)
+        && d.discomfort in ['not-reported','none','present'] && shortText(d.notes,2000)
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function context() {
+      let d=request.resource.data;
+      return d.keys().hasOnly(['activityNotes','treatmentNotes','lumbarNotes','medicalNotes','sourceNotes','updatedAt'])
+        && shortText(d.activityNotes,5000) && shortText(d.treatmentNotes,5000) && shortText(d.lumbarNotes,5000)
+        && shortText(d.medicalNotes,5000) && shortText(d.sourceNotes,5000) && d.updatedAt == request.time;
+    }
+    match /members/{email} {
+      allow get: if googleUser() && request.auth.token.email.lower() == email;
+      allow list, write: if false;
+    }
+    match /users/{uid}/transformations/{tid} {
+      allow read: if owner(uid);
+      allow create: if owner(uid) && profile(uid) && request.resource.data.createdAt == request.time;
+      allow update: if owner(uid) && profile(uid) && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+      match /weights/{id} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && parentOwner(uid,tid) && weight() && request.resource.data.createdAt == request.time;
+        allow update: if owner(uid) && parentOwner(uid,tid) && weight() && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+      match /sessions/{id} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && parentOwner(uid,tid) && session() && request.resource.data.createdAt == request.time;
+        allow update: if owner(uid) && parentOwner(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if false;
+      }
+      match /private/context {
+        allow read: if owner(uid);
+        allow create, update: if owner(uid) && parentOwner(uid,tid) && context();
+        allow delete: if false;
+      }
+    }
+    match /{document=**} { allow read,write: if false; }
+  }
+}
