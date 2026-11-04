@@ -1,5 +1,6 @@
 import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
 import {
   initializeTestEnvironment,
   assertSucceeds,
@@ -179,6 +180,43 @@ test('malformed weights and attempts to change ownership are denied', async () =
       updatedAt: serverTimestamp(),
     }),
   );
+});
+test('owners can save six avatar builds on legacy profiles; invalid selections and cross-account edits are denied', async () => {
+  const ref = doc(db('one', 'one@example.test'), 'users', 'one', 'transformations', 'first');
+  const original = (await getDoc(ref)).data();
+  for (const avatar of ['male', 'female', 'neutral']) {
+    await assertSucceeds(
+      updateDoc(ref, {
+        avatar,
+        avatarStages: { start: 4, current: 5, target: 6 },
+        updatedAt: serverTimestamp(),
+      }),
+    );
+  }
+  for (const avatarStages of [
+    null,
+    [],
+    {},
+    { start: 1, current: 2 },
+    { start: 0, current: 2, target: 3 },
+    { start: 1, current: 7, target: 3 },
+    { start: 1, current: 2, target: 1.5 },
+    { start: 1, current: 2, target: '6' },
+    { start: 1, current: 2, target: 3, unknown: true },
+  ]) {
+    await assertFails(updateDoc(ref, { avatarStages, updatedAt: serverTimestamp() }));
+  }
+  await assertFails(
+    updateDoc(doc(db('two', 'two@example.test'), 'users', 'one', 'transformations', 'first'), {
+      avatarStages: { start: 4, current: 5, target: 6 },
+      updatedAt: serverTimestamp(),
+    }),
+  );
+  const saved = (await getDoc(ref)).data();
+  assert.equal(saved.initialWeight, original.initialWeight);
+  assert.equal(saved.targetWeight, original.targetWeight);
+  assert.deepEqual(saved.createdAt, original.createdAt);
+  assert.deepEqual(saved.avatarStages, { start: 4, current: 5, target: 6 });
 });
 test('clinical context is separate and isolated by owner', async () => {
   const one = db('one', 'one@example.test');

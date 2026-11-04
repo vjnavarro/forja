@@ -10,6 +10,7 @@ import {
   Library,
   LogOut,
   Plus,
+  SlidersHorizontal,
   Scale,
   Upload,
   X,
@@ -17,6 +18,7 @@ import {
 import { Brand } from '../components/Brand.jsx';
 import { TransformationDashboard } from './TransformationDashboard.jsx';
 import { Dialog, ProfileForm, SessionForm, WeightForm } from './Forms.jsx';
+import { AppearanceForm } from './AvatarPicker.jsx';
 import {
   HealthContext,
   ReliableLibrary,
@@ -348,6 +350,16 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
             <p>Tu evolución, tus hábitos y tus próximos objetivos.</p>
           </div>
           <div className="quick-actions">
+            <button
+              className="outline-button"
+              onClick={() => {
+                setError('');
+                setForm('appearance');
+              }}
+            >
+              <SlidersHorizontal size={17} />
+              Figuras
+            </button>
             <button className="primary-button" onClick={onWeight}>
               <Plus size={17} />
               Pesaje
@@ -458,12 +470,30 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
       </nav>
       {form && (
         <Dialog
-          title={form === 'weight' ? 'Registrar pesaje' : 'Registrar sesión'}
+          title={
+            form === 'appearance'
+              ? 'Personalizar figuras'
+              : form === 'weight'
+                ? 'Registrar pesaje'
+                : 'Registrar sesión'
+          }
           onClose={() => {
             if (!busy) setForm(null);
           }}
         >
-          {form === 'weight' ? (
+          {form === 'appearance' ? (
+            <AppearanceForm
+              profile={profile}
+              busy={busy}
+              error={error}
+              onSave={(value) =>
+                write(
+                  () => cloud.saveAppearance(user.uid, profile.id, value),
+                  'Figuras guardadas en tu transformación.',
+                )
+              }
+            />
+          ) : form === 'weight' ? (
             <WeightForm
               busy={busy}
               error={error}

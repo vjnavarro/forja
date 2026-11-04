@@ -1,3 +1,5 @@
+import { validateAppearance } from './avatars.js';
+
 export const MAX_WEIGHT = 350;
 export const WEIGHT_STATES = ['confirmed', 'reference', 'spot'];
 export const ACTIVITY_TYPES = ['swim', 'strength', 'core'];
@@ -71,7 +73,10 @@ export function validateProfile(value) {
     dietStartDate: value.dietStartDate || '',
     heightCm: value.heightCm,
     sex: ['male', 'female', 'unspecified'].includes(value.sex) ? value.sex : 'unspecified',
-    avatar: ['male', 'female', 'neutral'].includes(value.avatar) ? value.avatar : 'neutral',
+    ...validateAppearance({
+      ...value,
+      avatar: ['male', 'female', 'neutral'].includes(value.avatar) ? value.avatar : 'neutral',
+    }),
     weeklyGoals: {
       swim: goals.swim,
       swimMax: goals.swimMax,

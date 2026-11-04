@@ -81,6 +81,13 @@ users/{uid}/transformations/{id}            configuración, sin contexto clínic
   private/context                          notas de salud y antecedentes
 ```
 
+La configuración incluye `avatar` (masculino, femenino o neutro) y `avatarStages`
+con `start`, `current` y `target` (enteros de 1 a 6). Cada etapa se elige de forma
+independiente, sin asociarla automáticamente al peso. Los perfiles antiguos sin
+`avatarStages` conservan las figuras 1/2/3. Al actualizar una instalación existente,
+publica las nuevas reglas antes de usar el selector: las reglas anteriores no
+permiten guardar este campo. No se requiere migrar historiales ni cambiar de plan.
+
 Los estados de pesaje son `confirmed`, `reference` y `spot`. Solo los dos primeros
 entran en la curva, el indicador y los hitos. La abscisa de la gráfica utiliza
 fechas numéricas reales, no índices semanales. Un hito se fecha en el primer

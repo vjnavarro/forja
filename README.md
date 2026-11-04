@@ -73,6 +73,9 @@ validación de Google OAuth y reglas en el proyecto real antes de activar usuari
 ## Datos y privacidad
 
 - Cada cuenta puede crear varias transformaciones. Una cuenta nueva empieza vacía.
+- Cada etapa de la infografía permite elegir entre seis complexiones masculinas o
+  femeninas, además de un avatar neutro. Se configuran al crear la transformación
+  o desde **Figuras** y se guardan en su perfil privado. El peso no cambia la imagen.
 - Las rutas son `users/{uid}/transformations/{id}`; los pesajes, sesiones y contexto
   privado están en subcolecciones separadas. No se autoriza acceso entre usuarios.
 - No hay caché persistente de datos de seguimiento en localStorage o IndexedDB.
