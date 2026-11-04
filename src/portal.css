@@ -528,6 +528,88 @@ button:disabled {
 .private-form textarea {
   resize: vertical;
 }
+.avatar-stage-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+.avatar-stage-buttons button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 3px;
+  border: 2px solid #d5e0eb;
+  border-radius: 9px;
+  background: #f4f7fb;
+  color: #15304b;
+  font: inherit;
+  cursor: pointer;
+}
+.avatar-stage-buttons button[aria-pressed='true'] {
+  border-color: #2475af;
+  background: #e5f1fa;
+}
+.avatar-stage-buttons strong {
+  font-size: 12px;
+}
+.avatar-stage-buttons span {
+  font-size: 10px;
+}
+.avatar-stage-preview,
+.avatar-option-preview {
+  display: block;
+  aspect-ratio: 1 / 2;
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+}
+.avatar-stage-preview {
+  height: 68px;
+}
+.private-form .avatar-options {
+  padding: 12px;
+}
+.avatar-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.private-form .avatar-option {
+  position: relative;
+  align-items: center;
+  padding: 22px 2px 9px;
+  gap: 4px;
+  border: 2px solid #d5e0eb;
+  border-radius: 8px;
+  background: #edf3f9;
+  color: #15304b;
+  cursor: pointer;
+  font-size: 10px;
+}
+.private-form .avatar-option.is-selected {
+  border-color: #2475af;
+  background: #e5f1fa;
+}
+.private-form .avatar-option input {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  margin: 0;
+  padding: 0;
+  width: 17px;
+  height: 17px;
+  min-height: 17px;
+  accent-color: #2475af;
+}
+.avatar-option:focus-within {
+  outline: 2px solid #15304b;
+  outline-offset: 2px;
+}
+.avatar-option-preview {
+  height: clamp(80px, 22vw, 130px);
+}
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

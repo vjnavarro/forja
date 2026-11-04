@@ -32,6 +32,7 @@ import {
 } from '../domain/transformation.js';
 
 import { cloudConfigured, useEmulators } from './config.js';
+import { validateAppearance } from '../domain/avatars.js';
 let instance;
 let pending;
 export function getCloud() {
@@ -192,6 +193,12 @@ async function initializeCloud() {
     toggleSession(uid, id, session) {
       return updateDoc(doc(rows(uid, id, 'sessions'), session.id), {
         completed: !session.completed,
+        updatedAt: serverTimestamp(),
+      });
+    },
+    saveAppearance(uid, id, value) {
+      return updateDoc(trans(uid, id), {
+        ...validateAppearance(value),
         updatedAt: serverTimestamp(),
       });
     },

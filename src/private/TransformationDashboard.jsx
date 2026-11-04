@@ -8,7 +8,6 @@ import {
   Plus,
   Target,
   Trophy,
-  UserRound,
 } from 'lucide-react';
 import {
   Area,
@@ -27,6 +26,8 @@ import {
   formatNumber,
   formatWeight,
 } from '../domain/transformation.js';
+import { AVATAR_STAGES, DEFAULT_AVATAR_STAGES } from '../domain/avatars.js';
+import { AvatarFigure } from './AvatarPicker.jsx';
 
 export function TransformationDashboard({
   profile,
@@ -37,7 +38,6 @@ export function TransformationDashboard({
   onWeek,
 }) {
   const m = calculateProgress(profile, weights);
-  const figures = profile.avatar === 'female' ? 'forja-stages-female.webp' : 'forja-stages.webp';
   const number = (value) => (incognito || value === null ? '•••' : formatNumber(value));
   const date = (value) => (incognito ? 'Fecha privada' : formatDate(value));
   const chart = m.refs.map((row) => ({ ...row, time: dateTime(row.date) }));
@@ -95,21 +95,11 @@ export function TransformationDashboard({
               },
             ].map((stage, index) => (
               <div className={`journey-stage ${stage.className}`} key={stage.label}>
-                {profile.avatar === 'neutral' ? (
-                  <div className="body-figure neutral-avatar">
-                    <UserRound size={74} aria-label="Avatar neutro" />
-                  </div>
-                ) : (
-                  <div
-                    className="body-figure"
-                    role="img"
-                    aria-label={`Personaje ficticio, etapa ${stage.label.toLowerCase()}. Imagen ilustrativa.`}
-                    style={{
-                      backgroundImage: `url(${import.meta.env.BASE_URL}images/transformation/${figures})`,
-                      backgroundPosition: `${index * 50}% center`,
-                    }}
-                  />
-                )}
+                <AvatarFigure
+                  avatar={profile.avatar}
+                  level={(profile.avatarStages ?? DEFAULT_AVATAR_STAGES)[AVATAR_STAGES[index]]}
+                  label={`Personaje ficticio, etapa ${stage.label.toLowerCase()}. Imagen ilustrativa.`}
+                />
                 <div className="stage-platform" aria-hidden="true" />
                 <div className="stage-label">
                   <p>{stage.label}</p>

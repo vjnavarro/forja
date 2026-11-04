@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { AvatarPicker } from './AvatarPicker.jsx';
+import { DEFAULT_AVATAR_STAGES } from '../domain/avatars.js';
 import {
   today,
   validateProfile,
@@ -47,6 +49,10 @@ export function Dialog({ title, onClose, children }) {
 const decimal = (value) => (value.trim() === '' ? null : Number(value.trim().replace(',', '.')));
 export function ProfileForm({ onSave, onCancel, busy, error }) {
   const [validation, setValidation] = useState('');
+  const [appearance, setAppearance] = useState({
+    avatar: 'neutral',
+    avatarStages: { ...DEFAULT_AVATAR_STAGES },
+  });
   async function submit(e) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
@@ -61,7 +67,7 @@ export function ProfileForm({ onSave, onCancel, busy, error }) {
           startDate: d.get('startDate'),
           dietStartDate: d.get('dietStartDate'),
           sex,
-          avatar: sex === 'female' ? 'female' : sex === 'male' ? 'male' : 'neutral',
+          ...appearance,
           weeklyGoals: {
             swim: Number(d.get('swim')),
             swimMax: Math.max(Number(d.get('swimMax')), Number(d.get('swim'))),
@@ -125,14 +131,24 @@ export function ProfileForm({ onSave, onCancel, busy, error }) {
             <input name="heightCm" inputMode="decimal" />
           </label>
           <label>
-            Sexo y figura ilustrativa
-            <select name="sex" defaultValue="unspecified">
-              <option value="unspecified">Prefiero no indicarlo · Avatar neutro</option>
-              <option value="male">Hombre · Figura masculina</option>
-              <option value="female">Mujer · Figura femenina</option>
+            Sexo (opcional)
+            <select
+              name="sex"
+              defaultValue="unspecified"
+              onChange={(e) =>
+                setAppearance((previous) => ({
+                  ...previous,
+                  avatar: e.target.value === 'unspecified' ? 'neutral' : e.target.value,
+                }))
+              }
+            >
+              <option value="unspecified">Prefiero no indicarlo</option>
+              <option value="male">Hombre</option>
+              <option value="female">Mujer</option>
             </select>
           </label>
         </div>
+        <AvatarPicker value={appearance} onChange={setAppearance} disabled={busy} />
         <fieldset>
           <legend>Tu planificación semanal</legend>
           <p>Objetivos que eliges tú; no son una prescripción ni generan sesiones realizadas.</p>

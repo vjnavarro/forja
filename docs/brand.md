@@ -22,6 +22,13 @@ las imágenes o en los archivos públicos.
   `public/images/transformation/`, son composiciones generadas de personajes
   adultos ficticios. Cada archivo contiene tres etapas de la misma identidad;
   CSS presenta cada tercio sin repetir la descarga. Hay también un avatar neutro.
+- `forja-stages-male-light.webp` y `forja-stages-female-light.webp` añaden tres
+  complexiones más finas por personaje: seis opciones masculinas y seis femeninas.
+  Al crear una transformación o pulsar **Figuras**, se elige por separado la
+  complexión de Inicio, Actual y Objetivo, con vista previa. No hay correspondencia
+  automática entre peso y figura, ni se fuerza una secuencia decreciente.
+  La selección se guarda en el perfil privado (`avatarStages`), admite las seis
+  opciones en cualquier etapa y mantiene 1/2/3 para perfiles antiguos sin selección.
 - `mountain-journey.webp` es un paisaje generado. La ruta, los hitos y las cifras
   son elementos de interfaz superpuestos; no son texto incrustado en la imagen.
 - Favicon e icono de iPhone derivan del símbolo oficial y conservan su geometría.
