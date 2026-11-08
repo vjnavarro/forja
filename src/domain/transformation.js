@@ -275,7 +275,7 @@ export function weeklySummary(profile, weights, sessions, date) {
       ]),
     ),
     sessions: weekSessions.map(
-      ({ date, type, completed, minutes, distance, exercises, discomfort, notes }) => ({
+      ({ date, type, completed, minutes, distance, exercises, discomfort, notes, origin }) => ({
         date,
         type,
         completed,
@@ -284,6 +284,7 @@ export function weeklySummary(profile, weights, sessions, date) {
         exercises,
         discomfort,
         notes,
+        ...(origin ? { origin: { ...origin } } : {}),
       }),
     ),
     milestones: metrics.milestones.filter((item) => item.date >= start && item.date <= end),

@@ -4,6 +4,14 @@ import assert from 'node:assert/strict';
 import { acceptWeeklyPlan } from '../../src/services/weekly-plans.js';
 import { generateDraft, plannedSession } from '../../src/domain/planning.js';
 import {
+  saveTrainingTemplate,
+  saveTrainingProgram,
+  saveTrainingReview,
+  prepareTrainingProposal,
+  acceptTrainingProposal,
+} from '../../src/services/training-programs.js';
+import { fingerprintSessions } from '../../src/domain/training.js';
+import {
   initializeTestEnvironment,
   assertSucceeds,
   assertFails,
@@ -295,12 +303,7 @@ test('sessions validate every exercise and retain explicit completion and discom
       exercises: [{ name: { bad: true }, sets: -1, repetitions: '5' }],
     }),
   );
-  await assertFails(
-    writeSession(one, 'bad', {
-      ...session,
-      completed: 'yes',
-    }),
-  );
+  await assertFails(writeSession(one, 'bad', { ...session, completed: 'yes' }));
   await assertFails(
     writeSession(one, 'too-many', {
       ...session,
@@ -367,7 +370,7 @@ test('simultaneous acceptance does not duplicate or replace a plan', async () =>
     'transformations',
     'first',
     'sessions',
-    'week-2025-02-03',
+    'week-2025-02-03-swim',
   );
   const batch = writeBatch(one);
   batch.update(session, { completed: true, updatedAt: serverTimestamp() });
@@ -393,7 +396,7 @@ test('existing sessions are preserved and malformed or incomplete plan writes ar
       'first',
       generateDraft('2025-02-03', [0], { swim: 1, strength: 0, core: 0 }),
     ),
-    /Ya hay sesiones/,
+    /Ya existe alguna/,
   );
   assert.equal(
     (await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))).size,
@@ -424,4 +427,276 @@ test('existing sessions are preserved and malformed or incomplete plan writes ar
       updatedAt: serverTimestamp(),
     }),
   );
+});
+
+test('a complete combined week supports 21 activities without duplicate days/types or rule limits', async () => {
+  const one = db('one', 'one@example.test');
+  const draft = generateDraft('2025-03-03', [0, 1, 2, 3, 4, 5, 6], {
+    swim: 7,
+    strength: 7,
+    core: 7,
+  });
+  assert.equal(await acceptWeeklyPlan(one, 'one', 'first', draft), 21);
+  const rows = await getDocs(
+    collection(one, 'users', 'one', 'transformations', 'first', 'sessions'),
+  );
+  assert.equal(rows.size, 21);
+  const plan = doc(one, 'users', 'one', 'transformations', 'first', 'plans', '2025-03-03');
+  assert.equal((await getDoc(plan)).data().version, 2);
+  const batch = writeBatch(one);
+  batch.update(plan, { sessionIds: [], updatedAt: serverTimestamp() });
+  batch.update(doc(one, 'users', 'one', 'transformations', 'first'), {
+    updatedAt: serverTimestamp(),
+  });
+  await assertFails(batch.commit());
+});
+
+const templateData = (title, level = 1) => ({
+  title,
+  focus: `Enfoque sintético ${title}`,
+  level,
+  type: 'core',
+  minutes: 5 * level,
+  distance: null,
+  source: 'Pauta sintética de pruebas',
+  exercises: Array.from({ length: 6 }, (_, index) => ({
+    name: `Ejercicio sintético ${index}`,
+    sets: level,
+    repetitions: '5 de prueba',
+  })),
+});
+async function trainingSetup(one) {
+  const a = await saveTrainingTemplate(one, 'one', 'first', templateData('A'));
+  const b = await saveTrainingTemplate(one, 'one', 'first', templateData('B'));
+  const c = await saveTrainingTemplate(one, 'one', 'first', templateData('C', 2));
+  await saveTrainingProgram(one, 'one', 'first', {
+    startWeek: '2025-02-03',
+    weeks: 4,
+    schedule: [
+      { day: 0, type: 'swim' },
+      { day: 0, type: 'core' },
+      { day: 3, type: 'core' },
+    ],
+    templateIds: [a, b, c],
+  });
+  const proposal = await prepareTrainingProposal(one, 'one', 'first', '2025-02-03');
+  await acceptTrainingProposal(one, 'one', 'first', '2025-02-03', proposal.token);
+  return { a, b, c };
+}
+async function completeTrainingWeek(one, pain = false) {
+  const rows = await getDocs(
+    collection(one, 'users', 'one', 'transformations', 'first', 'sessions'),
+  );
+  const batch = writeBatch(one);
+  rows.docs.forEach((row, index) =>
+    batch.update(row.ref, {
+      completed: true,
+      discomfort: pain && index === 0 ? 'present' : 'none',
+      updatedAt: serverTimestamp(),
+    }),
+  );
+  batch.update(doc(one, 'users', 'one', 'transformations', 'first'), {
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+  return (
+    await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))
+  ).docs.map((row) => ({ ...row.data(), id: row.id }));
+}
+test('template rotation, recurring program and reviewed progression persist privately without new services', async () => {
+  const one = db('one', 'one@example.test');
+  await trainingSetup(one);
+  const rows = await completeTrainingWeek(one);
+  assert.equal(rows.length, 3);
+  assert.ok(rows.filter((row) => row.type === 'core').every((row) => row.exercises.length === 6));
+  await saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+    fingerprint: await fingerprintSessions(rows),
+    wellbeing: 'good',
+    discomfort: 'none',
+    decision: 'increase',
+    notes: '',
+  });
+  const next = await prepareTrainingProposal(one, 'one', 'first', '2025-02-10');
+  assert.ok(
+    next.draft.sessions.filter((row) => row.type === 'core').every((row) => row.origin.level === 2),
+  );
+  const result = await acceptTrainingProposal(one, 'one', 'first', '2025-02-10', next.token);
+  assert.equal(result.created, 3);
+  const again = await acceptTrainingProposal(one, 'one', 'first', '2025-02-10', next.token);
+  assert.equal(again.created, 0);
+  assert.equal(again.preserved, 3);
+  const two = db('two', 'two@example.test');
+  for (const [type, id] of [
+    ['templates', rows.find((row) => row.origin.templateId).origin.templateId],
+    ['private', 'program'],
+    ['reviews', '2025-02-03'],
+  ])
+    await assertFails(getDoc(doc(two, 'users', 'one', 'transformations', 'first', type, id)));
+});
+test('new session records invalidate a review; new template versions invalidate an unaccepted proposal', async () => {
+  const one = db('one', 'one@example.test');
+  const { a } = await trainingSetup(one);
+  const rows = await completeTrainingWeek(one),
+    oldHash = await fingerprintSessions(rows);
+  const first = rows[0];
+  const change = writeBatch(one);
+  change.update(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', first.id), {
+    notes: 'Cambio concurrente sintético',
+    updatedAt: serverTimestamp(),
+  });
+  change.update(doc(one, 'users', 'one', 'transformations', 'first'), {
+    updatedAt: serverTimestamp(),
+  });
+  await change.commit();
+  await assert.rejects(
+    saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+      fingerprint: oldHash,
+      wellbeing: 'good',
+      discomfort: 'none',
+      decision: 'maintain',
+      notes: '',
+    }),
+    /han cambiado/,
+  );
+  const fresh = (
+    await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))
+  ).docs.map((row) => ({ ...row.data(), id: row.id }));
+  await saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+    fingerprint: await fingerprintSessions(fresh),
+    wellbeing: 'good',
+    discomfort: 'none',
+    decision: 'maintain',
+    notes: '',
+  });
+  const proposal = await prepareTrainingProposal(one, 'one', 'first', '2025-02-10');
+  const original = {
+    ...(await getDoc(doc(one, 'users', 'one', 'transformations', 'first', 'templates', a))).data(),
+    id: a,
+  };
+  await saveTrainingTemplate(one, 'one', 'first', { ...original, title: 'A ajustada' }, original);
+  await assert.rejects(
+    acceptTrainingProposal(one, 'one', 'first', '2025-02-10', proposal.token),
+    /han cambiado/,
+  );
+  assert.equal(
+    (await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))).size,
+    3,
+  );
+});
+test('reported discomfort blocks increases even with a favourable report and retains undosed next-week blocks', async () => {
+  const one = db('one', 'one@example.test');
+  await trainingSetup(one);
+  const rows = await completeTrainingWeek(one, true),
+    fingerprint = await fingerprintSessions(rows);
+  await assert.rejects(
+    saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+      fingerprint,
+      wellbeing: 'good',
+      discomfort: 'none',
+      decision: 'increase',
+      notes: '',
+    }),
+    /No se propone/,
+  );
+  await saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+    fingerprint,
+    wellbeing: 'mixed',
+    discomfort: 'present',
+    decision: 'maintain',
+    notes: '',
+  });
+  const next = await prepareTrainingProposal(one, 'one', 'first', '2025-02-10');
+  assert.ok(
+    next.draft.sessions.every(
+      (row) =>
+        row.exercises.length === 0 &&
+        row.minutes === null &&
+        row.distance === null &&
+        !row.completed,
+    ),
+  );
+  await acceptTrainingProposal(one, 'one', 'first', '2025-02-10', next.token);
+});
+test('legacy accepted plans can receive another activity on the same day without losing their references', async () => {
+  const one = db('one', 'one@example.test'),
+    parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const batch = writeBatch(one);
+  batch.set(doc(parent, 'sessions', 'week-2025-02-03'), {
+    ...plannedSession('2025-02-03', 'swim'),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  batch.set(doc(parent, 'plans', '2025-02-03'), {
+    weekStart: '2025-02-03',
+    weekEnd: '2025-02-09',
+    source: 'availability',
+    sessionIds: ['week-2025-02-03'],
+    createdAt: serverTimestamp(),
+  });
+  batch.update(parent, { updatedAt: serverTimestamp() });
+  await batch.commit();
+  assert.equal(
+    await acceptWeeklyPlan(
+      one,
+      'one',
+      'first',
+      generateDraft('2025-02-03', [0], { swim: 0, strength: 0, core: 1 }),
+    ),
+    1,
+  );
+  const saved = (await getDoc(doc(parent, 'plans', '2025-02-03'))).data();
+  assert.equal(saved.version, 2);
+  assert.deepEqual(saved.sessionIds, ['week-2025-02-03', 'week-2025-02-03-core']);
+  assert.equal((await getDoc(doc(parent, 'sessions', 'week-2025-02-03'))).data().type, 'swim');
+});
+test('program limits accept twelve templates and all combined days; malformed schedules and plan IDs are denied', async () => {
+  const one = db('one', 'one@example.test'),
+    parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const ids = [];
+  for (let index = 0; index < 12; index++)
+    ids.push(
+      await saveTrainingTemplate(one, 'one', 'first', {
+        ...templateData(`T${index}`),
+        exercises: [{ name: 'Ejercicio sintético', sets: 1, repetitions: '5' }],
+      }),
+    );
+  const schedule = Array.from({ length: 7 }, (_, day) =>
+    ['swim', 'strength', 'core'].map((type) => ({ day, type })),
+  ).flat();
+  await saveTrainingProgram(one, 'one', 'first', {
+    startWeek: '2025-02-03',
+    weeks: 12,
+    schedule,
+    templateIds: ids,
+  });
+  assert.equal((await getDoc(doc(parent, 'private', 'program'))).data().templateIds.length, 12);
+  const bad = writeBatch(one);
+  bad.set(doc(parent, 'private', 'program'), {
+    startWeek: '2025-02-03',
+    weeks: 4,
+    schedule: { '8-core': true },
+    templateIds: [],
+    updatedAt: serverTimestamp(),
+  });
+  bad.update(parent, { updatedAt: serverTimestamp() });
+  await assertFails(bad.commit());
+  for (const sessionIds of [
+    [42],
+    ['week-2025-02-03-swim/week-2025-02-04-core'],
+    ['../other'],
+    [{ id: 'fake' }],
+  ]) {
+    const b = writeBatch(one);
+    b.set(doc(parent, 'plans', '2025-02-03'), {
+      version: 2,
+      weekStart: '2025-02-03',
+      weekEnd: '2025-02-09',
+      source: 'program',
+      sessionIds,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+    b.update(parent, { updatedAt: serverTimestamp() });
+    await assertFails(b.commit());
+  }
 });

@@ -11,6 +11,7 @@ import {
 } from '../domain/transformation.js';
 import { exercises } from '../demo.js';
 import { WeeklyPlanner } from './WeeklyPlanner.jsx';
+import { TrainingAutomation } from './TrainingAutomation.jsx';
 const labels = { swim: 'Natación', strength: 'Fuerza', core: 'Core' };
 const stateLabels = {
   confirmed: 'Confirmado',
@@ -100,6 +101,7 @@ export function WeeklyPlan({
   busy,
 }) {
   const [date, setDate] = useState(today());
+  const [planningNotice, setPlanningNotice] = useState('');
   if (incognito) return <PrivacyGate onReveal={onReveal} />;
   const summary = weeklySummary(profile, [], sessions, date);
   const rows = sessions.filter((row) => row.date >= summary.start && row.date <= summary.end);
@@ -149,6 +151,23 @@ export function WeeklyPlan({
         uid={uid}
         disabled={busy}
       />
+      {planningNotice && (
+        <p className="notice" role="status">
+          {planningNotice}
+        </p>
+      )}
+      <TrainingAutomation
+        key={`training-${summary.start}`}
+        profile={profile}
+        sessions={sessions}
+        date={date}
+        cloud={cloud}
+        uid={uid}
+        onSaved={(week, message) => {
+          setDate(week);
+          setPlanningNotice(message);
+        }}
+      />
       <section className="session-list" aria-label="Sesiones de la semana">
         {rows.map((row) => (
           <article className="card personal-session" key={row.id}>
@@ -183,6 +202,11 @@ export function WeeklyPlan({
                 .
               </p>
               {row.notes && <p>{row.notes}</p>}
+              {row.origin?.edited && (
+                <p className="context-note">
+                  Detalles ajustados manualmente tras la planificación.
+                </p>
+              )}
             </div>
             <div className="session-actions">
               <button

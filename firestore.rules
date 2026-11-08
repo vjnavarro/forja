@@ -61,7 +61,7 @@ service cloud.firestore {
     function session() {
       let d=request.resource.data;
       let items=d.exercises;
-      return d.keys().hasOnly(['date','type','completed','minutes','distance','exercises','discomfort','notes','createdAt','updatedAt'])
+      return d.keys().hasOnly(['date','type','completed','minutes','distance','exercises','discomfort','notes','origin','createdAt','updatedAt'])
         && d.keys().hasAll(['date','type','completed','minutes','distance','exercises','discomfort','notes','createdAt','updatedAt'])
         && validDate(d.date) && d.type in ['swim','strength','core'] && d.completed is bool
         && (d.minutes == null || (d.minutes is number && d.minutes >= 0 && d.minutes <= 1440))
@@ -69,7 +69,23 @@ service cloud.firestore {
         && items is list && items.size() <= 6
         && exerciseAt(items,0) && exerciseAt(items,1) && exerciseAt(items,2) && exerciseAt(items,3) && exerciseAt(items,4) && exerciseAt(items,5)
         && d.discomfort in ['not-reported','none','present'] && shortText(d.notes,2000)
+        && (!('origin' in d) || sessionOrigin(d.origin))
         && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function sessionOrigin(o) {
+      return o is map && o.keys().hasOnly(['weekStart','templateId','title','focus','level','edited'])
+        && validDate(o.weekStart) && shortText(o.templateId,100) && shortText(o.title,80)
+        && shortText(o.focus,80) && o.level is int && o.level >= 0 && o.level <= 5 && o.edited is bool;
+    }
+    function sessionPlanLink(uid,tid,id) {
+      let d=request.resource.data;
+      return !('origin' in d) || (d.completed == false && d.discomfort == 'not-reported'
+        && id == 'week-' + d.date + '-' + d.type
+        && originPlanLink(uid,tid,id,d.origin.weekStart));
+    }
+    function originPlanLink(uid,tid,id,week) {
+      let p=getAfter(/databases/$(database)/documents/users/$(uid)/transformations/$(tid)/plans/$(week)).data;
+      return p.version==2 && id in p.sessionIds && request.resource.data.date>=p.weekStart && request.resource.data.date<=p.weekEnd;
     }
     function context() {
       let d=request.resource.data;
@@ -101,6 +117,52 @@ service cloud.firestore {
         && plannedSlot(uid,tid,ids,4,d.weekStart,d.weekEnd) && plannedSlot(uid,tid,ids,5,d.weekStart,d.weekEnd)
         && plannedSlot(uid,tid,ids,6,d.weekStart,d.weekEnd);
     }
+    function weeklyPlanV2(week) {
+      let d=request.resource.data;
+      let ids=d.sessionIds;
+      let joined=ids.join('/');
+      return d.keys().hasOnly(['version','weekStart','weekEnd','source','sessionIds','createdAt','updatedAt'])
+        && d.keys().hasAll(['version','weekStart','weekEnd','source','sessionIds','createdAt','updatedAt'])
+        && d.version == 2 && d.weekStart == week && validDate(d.weekStart) && validDate(d.weekEnd)
+        && timestamp.value(d.weekEnd + 'T00:00:00Z') == timestamp.value(d.weekStart + 'T00:00:00Z') + duration.value(6,'d')
+        && d.source in ['availability','previous-week','manual','program','review'] && d.createdAt is timestamp && d.updatedAt == request.time
+        && ids is list && ids.size() > 0 && ids.size() <= 21 && ids.toSet().size() == ids.size()
+        && joined.matches('^week-[0-9]{4}-[0-9]{2}-[0-9]{2}(-(swim|strength|core))?(/week-[0-9]{4}-[0-9]{2}-[0-9]{2}(-(swim|strength|core))?){0,20}$')
+        && joined.split('/').size() == ids.size();
+    }
+    function template() {
+      let d=request.resource.data;
+      let items=d.exercises;
+      return d.keys().hasOnly(['title','focus','level','source','type','minutes','distance','exercises','createdAt','updatedAt'])
+        && shortText(d.title,80) && d.title.size()>0 && shortText(d.focus,80) && d.focus.size()>0 && shortText(d.source,1000)
+        && d.level is int && d.level >= 1 && d.level <= 5 && d.type in ['swim','strength','core']
+        && (d.minutes == null || (d.minutes is number && d.minutes >= 0 && d.minutes <= 1440))
+        && (d.distance == null || (d.distance is number && d.distance >= 0 && d.distance <= 100000))
+        && items is list && items.size() <= 6 && (d.type == 'swim' || items.size()>0)
+        && exerciseAt(items,0) && exerciseAt(items,1) && exerciseAt(items,2) && exerciseAt(items,3) && exerciseAt(items,4) && exerciseAt(items,5)
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
+    function templateIdAt(ids,index) { return ids.size() <= index || (ids[index] is string && ids[index].matches('^[A-Za-z0-9_-]{1,100}$')); }
+    function program() {
+      let d=request.resource.data;
+      let ids=d.templateIds;
+      return d.keys().hasOnly(['startWeek','weeks','schedule','templateIds','updatedAt'])
+        && validDate(d.startWeek) && d.weeks is int && d.weeks>=1 && d.weeks<=12
+        && d.schedule is map && d.schedule.size()>0 && d.schedule.size()<=21 && d.schedule.values().hasOnly([true])
+        && d.schedule.keys().hasOnly(['0-swim','0-strength','0-core','1-swim','1-strength','1-core','2-swim','2-strength','2-core','3-swim','3-strength','3-core','4-swim','4-strength','4-core','5-swim','5-strength','5-core','6-swim','6-strength','6-core'])
+        && ids is list && ids.size()<=12 && ids.toSet().size()==ids.size()
+        && templateIdAt(ids,0) && templateIdAt(ids,1) && templateIdAt(ids,2) && templateIdAt(ids,3) && templateIdAt(ids,4) && templateIdAt(ids,5)
+        && templateIdAt(ids,6) && templateIdAt(ids,7) && templateIdAt(ids,8) && templateIdAt(ids,9) && templateIdAt(ids,10) && templateIdAt(ids,11)
+        && d.updatedAt == request.time;
+    }
+    function review(week) {
+      let d=request.resource.data;
+      return d.keys().hasOnly(['weekStart','wellbeing','discomfort','decision','notes','fingerprint','createdAt','updatedAt'])
+        && d.weekStart==week && validDate(week) && d.wellbeing in ['good','mixed','bad'] && d.discomfort in ['none','present','unknown']
+        && d.decision in ['maintain','increase','reduce'] && (d.decision != 'increase' || (d.wellbeing == 'good' && d.discomfort == 'none'))
+        && shortText(d.notes,2000) && d.fingerprint is string && d.fingerprint.matches('^[0-9a-f]{64}$')
+        && d.createdAt is timestamp && d.updatedAt == request.time;
+    }
     match /members/{email} {
       allow get: if googleUser() && request.auth.token.email.lower() == email;
       allow list, write: if false;
@@ -112,8 +174,10 @@ service cloud.firestore {
       allow delete: if false;
       match /plans/{week} {
         allow read: if owner(uid);
-        allow create: if owner(uid) && sessionParent(uid,tid) && weeklyPlan(uid,tid,week);
-        allow update,delete: if false;
+        allow create: if owner(uid) && sessionParent(uid,tid) && (('version' in request.resource.data && weeklyPlanV2(week) && request.resource.data.createdAt == request.time) || (!('version' in request.resource.data) && weeklyPlan(uid,tid,week)));
+        allow update: if owner(uid) && sessionParent(uid,tid) && weeklyPlanV2(week)
+          && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.sessionIds.hasAll(resource.data.sessionIds);
+        allow delete: if false;
       }
       match /weights/{id} {
         allow read: if owner(uid);
@@ -123,13 +187,30 @@ service cloud.firestore {
       }
       match /sessions/{id} {
         allow read: if owner(uid);
-        allow create: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == request.time;
+        allow create: if owner(uid) && sessionParent(uid,tid) && session() && sessionPlanLink(uid,tid,id) && request.resource.data.createdAt == request.time;
         allow update: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if false;
       }
       match /private/context {
         allow read: if owner(uid);
         allow create, update: if owner(uid) && parentOwner(uid,tid) && context();
+        allow delete: if false;
+      }
+      match /templates/{id} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && sessionParent(uid,tid) && template() && request.resource.data.createdAt==request.time;
+        allow update: if owner(uid) && sessionParent(uid,tid) && template() && request.resource.data.createdAt==resource.data.createdAt;
+        allow delete: if false;
+      }
+      match /private/program {
+        allow read: if owner(uid);
+        allow create,update: if owner(uid) && sessionParent(uid,tid) && program();
+        allow delete: if false;
+      }
+      match /reviews/{week} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && sessionParent(uid,tid) && review(week) && request.resource.data.createdAt==request.time;
+        allow update: if owner(uid) && sessionParent(uid,tid) && review(week) && request.resource.data.createdAt==resource.data.createdAt;
         allow delete: if false;
       }
     }
