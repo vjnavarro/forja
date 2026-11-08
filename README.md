@@ -75,6 +75,9 @@ validación de Google OAuth y reglas en el proyecto real antes de activar usuari
 ## Datos y privacidad
 
 - Cada cuenta puede crear varias transformaciones. Una cuenta nueva empieza vacía.
+- El menú **Cuenta**, en el portal y las vistas privadas, muestra el correo de
+  la sesión Google y permite cerrarla. El cierre fallido conserva el acceso y
+  muestra un aviso para reintentar; un cierre confirmado retira las vistas privadas.
 - Cada etapa de la infografía permite elegir entre seis complexiones masculinas o
   femeninas, además de un avatar neutro. Se configuran al crear la transformación
   o desde **Figuras** y se guardan en su perfil privado. El peso no cambia la imagen.
@@ -102,6 +105,12 @@ está ilustrado con datos sintéticos en `tests/fixtures/initial.json`; el campo
 transformación, no mezcla ni sobrescribe otra. No convierte lecturas puntuales en
 confirmadas ni añade sesiones que no estén en el archivo. Mantén los archivos
 reales fuera del repositorio, de `public/` y de snapshots compartidos del entorno.
+
+## Planificación de entrenamientos
+
+La vista Semana registra objetivos y sesiones elegidos por el usuario. Todavía no
+genera planes de entrenamiento ni adapta automáticamente los ejercicios a una
+situación clínica. [Estado, fuentes y diseño de la siguiente versión](docs/training-planning.md).
 
 ## Publicación
 

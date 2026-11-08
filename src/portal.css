@@ -39,6 +39,60 @@
   padding: 0 32px 20px;
   margin: 0 auto;
 }
+.account-menu {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+  color: #15304b;
+  z-index: 30;
+}
+.private-app .account-menu { color: var(--text-primary); }
+.account-menu .account-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #93acc1;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+  color: inherit;
+  background: transparent;
+}
+.account-menu .account-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.account-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(300px, calc(100vw - 36px));
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid #c9d6e2;
+  border-radius: 12px;
+  box-shadow: 0 12px 35px #03182d33;
+  background: #fff;
+  color: #15304b;
+}
+.account-panel > span { font-size: 11px; color: #52677b; }
+.account-panel > strong { font-size: 14px; overflow-wrap: anywhere; }
+.account-menu .account-signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #15304b;
+  border-radius: 8px;
+  background: #15304b;
+  color: #fff;
+  font-size: 12px;
+}
+.account-menu .account-error { margin: 0; color: #a31e1e; font-size: 12px; line-height: 1.6; }
 .portal-hero {
   margin: 36px 0 54px;
   background: var(--forja-primary);
