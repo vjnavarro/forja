@@ -2,13 +2,48 @@
 
 ## Uso
 
-En Semana, desactiva incógnito. El calendario permite hasta 21 actividades: una
-por tipo y día. Puedes combinar natación, fuerza y core el mismo día. Generar un
-borrador no guarda datos; revisa y acepta las fechas antes de guardarlo.
+En **Semana**, desactiva incógnito para ver el calendario. En móvil, la tira de
+siete días permite consultar uno cada vez sin recorrer una lista larga. En escritorio,
+los días aparecen en una cuadrícula. Cada día tiene accesos **+ Natación**, **+ Fuerza**
+y **+ Core** que abren el formulario con fecha y actividad ya elegidas.
 
-Una semana ya aceptada admite actividades adicionales. Se bloquea repetir el
-mismo tipo en el mismo día. Los planes anteriores se conservan y se actualiza su
-formato al añadir nuevas actividades, sin borrar sus referencias ni sus sesiones.
+Las tarjetas muestran el estado y la distancia, duración o número de ejercicios.
+Se puede marcar una actividad completada, editar sus detalles o eliminarla desde
+la propia tarjeta. Las observaciones y ejercicios se despliegan con **Ver detalles**.
+Eliminar requiere revisar fecha y actividad y confirmar expresamente; también se
+advierte si estaba completada. No se da por realizada ninguna actividad al crearla.
+
+**Semana tipo y revisión** abre la configuración para varias semanas. **Distribuir
+esta semana** conserva el planificador de disponibilidad y su borrador revisable.
+Ambos quedan detrás del calendario para que no compitan con el registro diario.
+El calendario permite combinar natación, fuerza y core el mismo día; la planificación
+por lotes admite hasta 21 combinaciones únicas de fecha y tipo.
+
+Al entrar se muestra la semana actual o la primera de la programación si todavía
+no ha empezado. Se puede navegar con las flechas, la fecha o **Ir a hoy**. Guardar
+una programación desde una semana fuera de su periodo lleva a su primera semana.
+Una propuesta fuera de periodo informa de las fechas, sin pedir una revisión ajena.
+
+## Corregir una semana de prueba
+
+1. Selecciona la semana que quieres vaciar.
+2. Abre **Corregir una semana de prueba → Eliminar esta semana**.
+3. Revisa el intervalo y los números de actividades totales y completadas.
+4. Si es la primera de la programación, puedes marcar **Empezar la programación el…**
+   para trasladar el inicio a la semana siguiente conservando duración, días y plantillas.
+5. Confirma la casilla de borrado y pulsa **Confirmar eliminación**.
+
+Se borran las sesiones cuya fecha pertenece a esa semana, su documento de plan y
+su revisión. También se incluyen sesiones manuales o completadas, indicadas antes
+de confirmar. Una sesión trasladada a otra semana se conserva aunque el plan
+antiguo mantenga una referencia a su ID. No se borran pesajes, contexto, plantillas,
+transformaciones ni actividades de otras semanas. El borrado es definitivo.
+
+El reinicio se realiza en una transacción. Si cambian las sesiones, el plan, la
+revisión o la programación desde que se abrió la confirmación, se rechaza y exige
+revisar de nuevo. Si se traslada el inicio, la nueva primera semana no requiere
+cerrar la semana de prueba eliminada. No se puede mover el inicio al borrar una
+semana intermedia. El borrado individual también rechaza una versión antigua.
 
 ## Configurar una vez para varias semanas
 
@@ -31,8 +66,8 @@ los ejercicios de todas ellas: cada propuesta posterior se prepara a partir de
 la revisión de la semana anterior y se acepta de forma explícita. Esto permite
 adaptar lo pendiente sin reescribir registros ya guardados.
 
-Cuando existe una programación, el panel se abre al entrar en Semana y avisa de
-una revisión anterior pendiente. Incógnito retira el panel y sus detalles.
+Al abrir **Semana tipo y revisión**, el panel avisa de una revisión anterior
+pendiente. Incógnito retira el calendario, el panel y sus detalles.
 
 ## Cerrar una semana y preparar la siguiente
 
@@ -99,5 +134,7 @@ edición manual queda indicada. Todos estos documentos siguen limitados al propi
 autorizado. No se incluye información personal en el código o los fixtures.
 
 Para activar esta versión: desplegar primero el cliente, publicar después las
-reglas actualizadas y recargar la web. No hay migración destructiva ni nuevas
-variables. Las nuevas colecciones se crean al guardar desde la aplicación.
+reglas actualizadas y recargar la web. No hay borrado automático ni nuevas
+variables. Las nuevas reglas permiten eliminar sesiones, planes y revisiones solo
+al propietario autorizado y exigen actualizar también la transformación en el
+mismo commit. Pesajes y contexto conservan sus restricciones anteriores. Las nuevas colecciones se crean al guardar desde la aplicación.

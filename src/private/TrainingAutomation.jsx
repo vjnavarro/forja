@@ -1,13 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, SessionForm } from './Forms.jsx';
 import { ProgramForm, ReviewForm } from './TrainingForms.jsx';
 import { ACTIVITY_LABELS, shiftDate } from '../domain/planning.js';
 import { fingerprintSessions, validateTemplate } from '../domain/training.js';
 import { formatDate, today, weekBounds } from '../domain/transformation.js';
 
-export function TrainingAutomation({ profile, sessions, date, cloud, uid, onSaved }) {
-  const programSeen = useRef(false);
-  const [open, setOpen] = useState(false),
+export function TrainingAutomation({
+  profile,
+  sessions,
+  date,
+  cloud,
+  uid,
+  onSaved,
+  initiallyOpen = false,
+}) {
+  const [open, setOpen] = useState(initiallyOpen),
     [data, setData] = useState({ program: undefined, templates: null, reviews: {} });
   const [dialog, setDialog] = useState(null),
     [selected, setSelected] = useState(null),
@@ -26,10 +33,6 @@ export function TrainingAutomation({ profile, sessions, date, cloud, uid, onSave
         profile.id,
         (program) => {
           setData((old) => ({ ...old, program }));
-          if (!programSeen.current) {
-            programSeen.current = true;
-            if (program) setOpen(true);
-          }
         },
         () => setError('La programación está pendiente de habilitar. Revisa las reglas de acceso.'),
       ),
@@ -347,6 +350,11 @@ export function TrainingAutomation({ profile, sessions, date, cloud, uid, onSave
                   setDialog(null);
                   setProposal(null);
                   setNotice('Programación guardada. Ya puedes preparar la propuesta.');
+                  if (
+                    date < value.startWeek ||
+                    date > shiftDate(value.startWeek, value.weeks * 7 - 1)
+                  )
+                    onSaved(value.startWeek, 'Programación guardada. Estás en su primera semana.');
                 })
               }
             />

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Waves, Dumbbell, PersonStanding } from 'lucide-react';
 import { ACTIVITY_LABELS } from '../domain/planning.js';
 import { assessWeek, validateProgram } from '../domain/training.js';
 import { formatDate, weekBounds } from '../domain/transformation.js';
+const icons = { swim: Waves, strength: Dumbbell, core: PersonStanding };
 const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 export function ProgramForm({ initial, templates, date, onSave, busy, error }) {
@@ -62,23 +64,27 @@ export function ProgramForm({ initial, templates, date, onSave, busy, error }) {
           <div className="program-day" key={day}>
             <strong>{label}</strong>
             <div className="program-day-options">
-              {Object.entries(ACTIVITY_LABELS).map(([type, title]) => (
-                <label className="check-label" key={type}>
-                  <input
-                    type="checkbox"
-                    aria-label={`${label}: ${title}`}
-                    checked={schedule.some((row) => row.day === day && row.type === type)}
-                    onChange={(e) =>
-                      setSchedule((old) =>
-                        e.target.checked
-                          ? [...old, { day, type }]
-                          : old.filter((row) => row.day !== day || row.type !== type),
-                      )
-                    }
-                  />
-                  {title}
-                </label>
-              ))}
+              {Object.entries(ACTIVITY_LABELS).map(([type, title]) => {
+                const Icon = icons[type];
+                return (
+                  <label className={`check-label activity-choice activity-${type}`} key={type}>
+                    <input
+                      type="checkbox"
+                      aria-label={`${label}: ${title}`}
+                      checked={schedule.some((row) => row.day === day && row.type === type)}
+                      onChange={(e) =>
+                        setSchedule((old) =>
+                          e.target.checked
+                            ? [...old, { day, type }]
+                            : old.filter((row) => row.day !== day || row.type !== type),
+                        )
+                      }
+                    />
+                    <Icon size={18} aria-hidden="true" />
+                    {title}
+                  </label>
+                );
+              })}
             </div>
           </div>
         ))}

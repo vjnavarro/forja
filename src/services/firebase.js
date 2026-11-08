@@ -35,6 +35,7 @@ import {
 import { cloudConfigured, useEmulators } from './config.js';
 import { validateAppearance } from '../domain/avatars.js';
 import { acceptWeeklyPlan } from './weekly-plans.js';
+import { prepareWeekReset, resetTrainingWeek, deleteTrainingSession } from './week-maintenance.js';
 import { decodeProgram } from '../domain/training.js';
 import {
   saveTrainingTemplate,
@@ -207,6 +208,9 @@ async function initializeCloud() {
     prepareTrainingProposal: (uid, id, date) => prepareTrainingProposal(db, uid, id, date),
     acceptTrainingProposal: (uid, id, date, token) =>
       acceptTrainingProposal(db, uid, id, date, token),
+    prepareWeekReset: (uid, id, date) => prepareWeekReset(db, uid, id, date),
+    resetTrainingWeek: (uid, id, date, value) => resetTrainingWeek(db, uid, id, date, value),
+    deleteSession: (uid, id, original) => deleteTrainingSession(db, uid, id, original),
     createTransformation(uid, profile) {
       return create(uid, profile, [
         {

@@ -20,7 +20,7 @@ import {
   validateTemplate,
 } from '../domain/training.js';
 import { shiftDate } from '../domain/planning.js';
-import { weekBounds } from '../domain/transformation.js';
+import { weekBounds, formatDate } from '../domain/transformation.js';
 import { commitPlan } from './weekly-plans.js';
 
 const root = (db, uid, id) => doc(db, 'users', uid, 'transformations', id);
@@ -91,6 +91,10 @@ async function loadProposal(parent, date, read = (ref) => getDoc(ref)) {
   if (!programDoc.exists()) throw new Error('Guarda primero tu programación.');
   const program = decodeProgram(programDoc.data()),
     previousStart = shiftDate(start, -7);
+  if (start < program.startWeek || start >= shiftDate(program.startWeek, program.weeks * 7))
+    throw new Error(
+      `Esta semana está fuera del periodo configurado. La programación empieza el ${formatDate(program.startWeek)}. Revisa sus fechas.`,
+    );
   const needsReview = start !== program.startWeek;
   const reviewDoc = needsReview ? await read(doc(parent, 'reviews', previousStart)) : null;
   const review = reviewDoc?.exists() ? reviewDoc.data() : null;
