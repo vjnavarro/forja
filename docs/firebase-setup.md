@@ -84,8 +84,16 @@ members/{email-en-minusculas}                enabled (solo administración)
 users/{uid}/transformations/{id}            configuración, sin contexto clínico
   weights/{id}                             date, kg, status, note
   sessions/{id}                            actividad, completado, series, molestias
+  plans/{lunes}                            aceptación semanal y referencias a sesiones
   private/context                          notas de salud y antecedentes
 ```
+
+Para activar el planificador en una instalación existente, despliega esta versión
+del cliente y publica a continuación las nuevas reglas; recarga después la web. La escritura
+de sesiones actualiza también el documento de transformación para detectar
+cambios concurrentes. El cliente anterior no realiza ese paso y no puede escribir
+sesiones con estas reglas nuevas. El historial se conserva. Consulta los detalles
+en [Planificación semanal](training-planning.md).
 
 La configuración incluye `avatar` (masculino, femenino o neutro) y `avatarStages`
 con `start`, `current` y `target` (enteros de 1 a 6). Cada etapa se elige de forma

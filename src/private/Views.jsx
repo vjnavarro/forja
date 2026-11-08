@@ -10,6 +10,7 @@ import {
   summaryText,
 } from '../domain/transformation.js';
 import { exercises } from '../demo.js';
+import { WeeklyPlanner } from './WeeklyPlanner.jsx';
 const labels = { swim: 'Natación', strength: 'Fuerza', core: 'Core' };
 const stateLabels = {
   confirmed: 'Confirmado',
@@ -86,7 +87,18 @@ export function WeightHistory({ profile, weights, incognito, onWeight }) {
     </section>
   );
 }
-export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, onToggle, busy }) {
+export function WeeklyPlan({
+  profile,
+  sessions,
+  incognito,
+  onReveal,
+  onSession,
+  onToggle,
+  onEdit,
+  cloud,
+  uid,
+  busy,
+}) {
   const [date, setDate] = useState(today());
   if (incognito) return <PrivacyGate onReveal={onReveal} />;
   const summary = weeklySummary(profile, [], sessions, date);
@@ -115,6 +127,9 @@ export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, 
               <strong>{label}</strong>
               <span>{summary.completed[type]} completadas</span>
               <small>
+                {rows.filter((row) => row.type === type && !row.completed).length} pendientes
+              </small>
+              <small>
                 Objetivo:{' '}
                 {type === 'swim' && profile.weeklyGoals.swimMax !== profile.weeklyGoals.swim
                   ? `${profile.weeklyGoals.swim}–${profile.weeklyGoals.swimMax}`
@@ -125,6 +140,15 @@ export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, 
           ))}
         </div>
       </section>
+      <WeeklyPlanner
+        key={summary.start}
+        profile={profile}
+        sessions={sessions}
+        date={date}
+        cloud={cloud}
+        uid={uid}
+        disabled={busy}
+      />
       <section className="session-list" aria-label="Sesiones de la semana">
         {rows.map((row) => (
           <article className="card personal-session" key={row.id}>
@@ -146,6 +170,9 @@ export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, 
                   ))}
                 </ul>
               )}
+              {row.type !== 'swim' && !row.exercises.length && (
+                <p className="care-note">Pauta de ejercicios por concretar.</p>
+              )}
               <p>
                 Molestias:{' '}
                 {row.discomfort === 'present'
@@ -157,16 +184,26 @@ export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, 
               </p>
               {row.notes && <p>{row.notes}</p>}
             </div>
-            <label className={`check-label ${row.completed ? 'done-button' : 'outline-button'}`}>
-              <input
-                type="checkbox"
-                checked={row.completed}
+            <div className="session-actions">
+              <button
+                className="outline-button"
                 disabled={busy}
-                aria-label={`Sesión completada de ${labels[row.type]} del ${formatDate(row.date)}`}
-                onChange={() => onToggle(row)}
-              />
-              {row.completed ? 'Completada' : 'Marcar completada'}
-            </label>
+                aria-label={`Editar sesión de ${labels[row.type]} del ${formatDate(row.date)}`}
+                onClick={() => onEdit(row)}
+              >
+                Editar sesión
+              </button>
+              <label className={`check-label ${row.completed ? 'done-button' : 'outline-button'}`}>
+                <input
+                  type="checkbox"
+                  checked={row.completed}
+                  disabled={busy}
+                  aria-label={`Sesión completada de ${labels[row.type]} del ${formatDate(row.date)}`}
+                  onChange={() => onToggle(row)}
+                />
+                {row.completed ? 'Completada' : 'Marcar completada'}
+              </label>
+            </div>
           </article>
         ))}
       </section>
@@ -182,8 +219,8 @@ export function WeeklyPlan({ profile, sessions, incognito, onReveal, onSession, 
         </div>
       )}
       <p className="care-note">
-        Los objetivos no generan entrenamientos automáticamente. Si hay molestias lumbares, no se
-        prescribe ni se aumenta la carga desde la aplicación.
+        El calendario organiza los bloques que eliges. Si hay molestias lumbares, no se prescribe ni
+        se aumenta la carga desde la aplicación.
       </p>
     </div>
   );

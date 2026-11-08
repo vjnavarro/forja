@@ -1,64 +1,76 @@
-# Planificación semanal: estado y siguiente versión
+# Planificación semanal
 
-## Implementado
+## Qué está implementado
 
-La vista Semana muestra los objetivos elegidos por el usuario y las sesiones
-que este registra con fecha, actividad, duración/distancia, ejercicios,
-series/repeticiones, molestias y estado planificado o completado. No genera
-entrenamientos. El resumen cuenta únicamente las sesiones marcadas como realizadas.
+En Semana, desactiva incógnito, elige la semana y abre **Planificar semana**.
+Selecciona tus días disponibles y el número de bloques de natación, fuerza y core.
+El calendario distribuye hasta siete bloques, uno por día disponible. Los objetivos
+del perfil son una referencia inicial; el usuario decide cuántos bloques organizar.
 
-La biblioteca es una selección estática de ilustraciones y consultas en canales
-institucionales (Swim England y Mayo Clinic). No es un catálogo de ejercicios
-validado para una situación clínica concreta. Las notas privadas de salud se
-guardan como texto y no se interpretan para prescribir ejercicios.
+**Generar borrador** no guarda datos. Puedes cambiar fechas y actividades antes
+de marcar que has revisado el calendario y pulsar **Aceptar y guardar plan**.
+Si cambias la disponibilidad o las cantidades, se descarta el borrador anterior.
+No se sustituye una sesión existente: los días ocupados se indican como conflicto.
 
-## Fuentes para construir la siguiente versión
+Las sesiones aceptadas quedan pendientes, sin duración, distancia, ejercicios ni
+dosis inventadas, y con molestias sin valorar. **Editar sesión** permite concretar
+estos datos, registrar observaciones y señalar qué se ha completado. Una edición
+basada en una versión antigua se rechaza si otro navegador/dispositivo ya ha
+modificado ese registro, para evitar sobrescribir datos recientes.
 
-1. **Configuración personal:** disponibilidad, días de piscina, frecuencia deseada,
-   material, duración disponible y objetivos confirmados por el usuario.
-2. **Pauta profesional:** ejercicios concretos autorizados, límites de carga,
-   frecuencia y criterios de pausa/revisión facilitados por médico o fisioterapeuta.
-   Una autorización genérica para empezar no completa estos campos.
-3. **Catálogo revisado:** cada ejercicio necesita identificador, explicación,
-   material, enlace técnico específico, procedencia y estado de revisión. Los
-   enlaces actuales de búsqueda son referencias de consulta, no esta validación.
-4. **Registro real:** sesiones completadas, tolerancia y molestias comunicadas.
-   Ausencia de registro no significa cumplimiento ni ausencia de dolor.
+**Reutilizar semana anterior** toma únicamente sus fechas relativas y actividades,
+tanto de sesiones planificadas como completadas. No copia duración, dosis,
+observaciones, molestias ni completados. Se revisa y acepta un nuevo borrador.
+El resumen semanal cuenta solo los completados explícitos e incluye las sesiones
+planificadas con `completed: false`.
 
-No se deducen cargas de los kilos, del avatar o del sexo. Las cifras del catálogo
-de demostración no son dosis personales de entrenamiento.
+Incógnito retira el planificador y los detalles de sesiones de la interfaz. El
+borrador vive en memoria y se descarta al salir de la vista o cambiar de semana.
 
-## Flujo propuesto, todavía pendiente de implementar
+## Fuentes y límites
 
-El usuario elige una plantilla y su distribución de días. Un motor sencillo de
-reglas organiza un **borrador** semanal de natación, fuerza y core a partir de
-las sesiones y ejercicios autorizados. Cada sesión conserva la procedencia de
-su plantilla. El usuario revisa y acepta el borrador antes de guardarlo.
+El calendario utiliza tu disponibilidad, los bloques que eliges y, si lo solicitas,
+la distribución de la semana anterior. No deduce cargas del peso, del sexo o del
+avatar. No interpreta el contexto clínico ni aumenta automáticamente los ejercicios.
+Los bloques de fuerza/core se señalan como pendientes de concretar cuando no se
+han indicado ejercicios.
 
-El borrador no aumenta series, repeticiones ni intensidad automáticamente. Si se
-comunican molestias, se señala la necesidad de revisar el plan y no se ofrecen
-progresiones automáticas. No se interpreta un diagnóstico para decidir ejercicios.
-Los ejercicios que carezcan de una pauta personal suficiente quedan pendientes
-de configurar; no se rellenan con valores genéricos.
+La biblioteca actual es una selección estática de ilustraciones y consultas en
+canales institucionales (Swim England y Mayo Clinic). No es un catálogo de
+prescripciones adaptado a una situación clínica concreta. La autorización general
+para empezar progresivamente no concreta ejercicios, dosis ni límites.
 
-La siguiente semana puede repetir una plantilla aceptada, manteniendo las cargas
-y separando siempre lo planificado de lo completado. Evitar sesiones duplicadas
-al generar o aceptar varias veces una semana forma parte de la implementación.
+Para una futura plantilla de ejercicios personalizada siguen pendientes:
+disponibilidad y material detallados; ejercicios y límites concretos revisados
+para la situación de la persona; y un catálogo con enlaces técnicos específicos,
+procedencia y estado de revisión. Los valores de la antigua demo no son dosis
+personales de entrenamiento. Si se comunican molestias no se generan progresiones.
 
-## Tecnología y coste
+No hay conexión automática con ChatGPT ni búsquedas médicas automáticas. Los
+resúmenes se comparten por acción del usuario; el contexto de salud es optativo.
+Se mantiene React, GitHub Pages y Firestore Spark, sin IA de pago ni Cloud Functions.
 
-La primera versión del planificador puede ejecutarse en React mediante reglas
-locales y guardar plantillas/planes privados en Firestore bajo el UID del usuario,
-con validación de esquema y reglas de acceso específicas. Mantiene Spark y Pages;
-no necesita Cloud Functions ni una API de IA de pago.
+## Guardado y acceso
 
-ChatGPT puede utilizarse de forma manual con los resúmenes exportados y solo con
-los datos que el usuario elija compartir. Hoy no hay conexión automática con
-ChatGPT, búsquedas médicas automáticas ni servicios de IA que reciban su historial.
+Cada plan aceptado se registra en `users/{uid}/transformations/{id}/plans/{lunes}`,
+con procedencia, fechas e IDs de las sesiones. Solo se admite un plan aceptado por
+semana. Su aceptación y la creación de las sesiones son una transacción: dos
+aceptaciones simultáneas no duplican ni sobrescriben registros. Después se editan
+las sesiones individualmente; no hay sustitución masiva ni borrado desde este flujo.
 
-## Orden de trabajo
+Cada escritura de sesiones actualiza el documento de la transformación en el mismo
+commit. Las reglas exigen ese cambio. El planificador lee ese documento antes de
+consultar el calendario: un cambio concurrente hace reintentar su transacción y
+volver a comprobar los conflictos. Las reglas también validan hasta siete
+referencias, un bloque por fecha, sin completados ni dosis en la aceptación inicial,
+y acceso exclusivamente del propietario autorizado.
 
-Importar y verificar el historial privado; recoger disponibilidad y pauta
-profesional; crear catálogo revisado y plantilla personal; implementar el borrador
-semanal y su aceptación; probar aislamiento, guardado y separación entre tareas
-planificadas/completadas. No se considera implementado hasta completar ese flujo.
+## Activación de una instalación existente
+
+Este módulo requiere publicar la nueva versión de `firestore.rules`.
+Despliega primero el cliente de esta versión; a continuación publica las nuevas
+reglas y recarga la web. Hasta publicar las reglas, el planificador mostrará un
+aviso de activación pendiente. No se migran ni borran historiales. El cliente
+anterior no actualizaba el documento padre al escribir sesiones y no es compatible
+con las reglas nuevas para esas escrituras. No hacen falta nuevas variables ni
+credenciales administrativas en el navegador.

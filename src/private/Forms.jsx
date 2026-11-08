@@ -251,10 +251,12 @@ export function WeightForm({ onSave, busy, error }) {
     </form>
   );
 }
-export function SessionForm({ onSave, busy, error }) {
-  const [type, setType] = useState('swim');
-  const [exercises, setExercises] = useState([]);
-  const [discomfort, setDiscomfort] = useState('not-reported');
+export function SessionForm({ onSave, busy, error, initial = null }) {
+  const [type, setType] = useState(initial?.type ?? 'swim');
+  const [exercises, setExercises] = useState(
+    () => initial?.exercises.map((item) => ({ ...item })) ?? [],
+  );
+  const [discomfort, setDiscomfort] = useState(initial?.discomfort ?? 'not-reported');
   const [validation, setValidation] = useState('');
   function changeExercise(index, key, value) {
     setExercises((rows) => rows.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
@@ -285,7 +287,7 @@ export function SessionForm({ onSave, busy, error }) {
       <div className="form-grid">
         <label>
           Fecha
-          <input type="date" name="date" defaultValue={today()} required />
+          <input type="date" name="date" defaultValue={initial?.date ?? today()} required />
         </label>
         <label>
           Actividad
@@ -297,12 +299,24 @@ export function SessionForm({ onSave, busy, error }) {
         </label>
         <label>
           Duración (min, opcional)
-          <input name="minutes" type="number" min="0" max="1440" />
+          <input
+            name="minutes"
+            type="number"
+            min="0"
+            max="1440"
+            defaultValue={initial?.minutes ?? ''}
+          />
         </label>
         {type === 'swim' && (
           <label>
             Distancia (m, opcional)
-            <input name="distance" type="number" min="0" max="100000" />
+            <input
+              name="distance"
+              type="number"
+              min="0"
+              max="100000"
+              defaultValue={initial?.distance ?? ''}
+            />
           </label>
         )}
       </div>
@@ -381,10 +395,10 @@ export function SessionForm({ onSave, busy, error }) {
       )}
       <label>
         Observaciones (opcional)
-        <textarea name="notes" maxLength={2000} rows={3} />
+        <textarea name="notes" maxLength={2000} rows={3} defaultValue={initial?.notes ?? ''} />
       </label>
       <label className="check-label">
-        <input name="completed" type="checkbox" />
+        <input name="completed" type="checkbox" defaultChecked={initial?.completed ?? false} />
         Sesión completada
       </label>
       {(validation || error) && (
