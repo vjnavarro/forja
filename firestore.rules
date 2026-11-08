@@ -177,7 +177,7 @@ service cloud.firestore {
         allow create: if owner(uid) && sessionParent(uid,tid) && (('version' in request.resource.data && weeklyPlanV2(week) && request.resource.data.createdAt == request.time) || (!('version' in request.resource.data) && weeklyPlan(uid,tid,week)));
         allow update: if owner(uid) && sessionParent(uid,tid) && weeklyPlanV2(week)
           && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.sessionIds.hasAll(resource.data.sessionIds);
-        allow delete: if false;
+        allow delete: if owner(uid) && sessionParent(uid,tid);
       }
       match /weights/{id} {
         allow read: if owner(uid);
@@ -189,7 +189,7 @@ service cloud.firestore {
         allow read: if owner(uid);
         allow create: if owner(uid) && sessionParent(uid,tid) && session() && sessionPlanLink(uid,tid,id) && request.resource.data.createdAt == request.time;
         allow update: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if false;
+        allow delete: if owner(uid) && sessionParent(uid,tid);
       }
       match /private/context {
         allow read: if owner(uid);
@@ -211,7 +211,7 @@ service cloud.firestore {
         allow read: if owner(uid);
         allow create: if owner(uid) && sessionParent(uid,tid) && review(week) && request.resource.data.createdAt==request.time;
         allow update: if owner(uid) && sessionParent(uid,tid) && review(week) && request.resource.data.createdAt==resource.data.createdAt;
-        allow delete: if false;
+        allow delete: if owner(uid) && sessionParent(uid,tid);
       }
     }
     match /{document=**} { allow read,write: if false; }

@@ -256,9 +256,22 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
     setError('');
     setForm('weight');
   };
-  const onSession = () => {
+  const onSession = (preset = null) => {
     setError('');
-    setEditingSession(null);
+    setEditingSession(
+      preset?.date
+        ? {
+            date: preset.date,
+            type: preset.type,
+            minutes: null,
+            distance: null,
+            exercises: [],
+            completed: false,
+            discomfort: 'not-reported',
+            notes: '',
+          }
+        : null,
+    );
     setForm('session');
   };
   const nav = () =>
@@ -275,7 +288,9 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
     ));
   const loading = !data.weights || !data.sessions || data.context === undefined;
   return (
-    <div className={`app private-app ${tab === 'dashboard' ? 'infographic-theme' : ''}`}>
+    <div
+      className={`app private-app ${tab === 'dashboard' ? 'infographic-theme' : ''} ${tab === 'week' ? 'private-week-view' : ''}`}
+    >
       <a
         className="skip-link"
         href="#private-content"
@@ -512,7 +527,7 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
             />
           ) : (
             <SessionForm
-              initial={form === 'edit-session' ? editingSession : null}
+              initial={editingSession}
               busy={busy}
               error={error}
               onSave={(value) =>

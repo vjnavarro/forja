@@ -10,9 +10,7 @@ import {
   summaryText,
 } from '../domain/transformation.js';
 import { exercises } from '../demo.js';
-import { WeeklyPlanner } from './WeeklyPlanner.jsx';
-import { TrainingAutomation } from './TrainingAutomation.jsx';
-const labels = { swim: 'Natación', strength: 'Fuerza', core: 'Core' };
+import { WeekBoard } from './WeekBoard.jsx';
 const stateLabels = {
   confirmed: 'Confirmado',
   reference: 'Referencia consolidada',
@@ -100,155 +98,21 @@ export function WeeklyPlan({
   uid,
   busy,
 }) {
-  const [date, setDate] = useState(today());
-  const [planningNotice, setPlanningNotice] = useState('');
   if (incognito) return <PrivacyGate onReveal={onReveal} />;
-  const summary = weeklySummary(profile, [], sessions, date);
-  const rows = sessions.filter((row) => row.date >= summary.start && row.date <= summary.end);
   return (
-    <div>
-      <section className="card private-section">
-        <div className="section-head">
-          <h2>Tu semana, en movimiento</h2>
-          <button className="primary-button" onClick={onSession}>
-            <Plus size={17} />
-            Sesión
-          </button>
-        </div>
-        <label className="week-picker">
-          Semana del
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-          />
-        </label>
-        <div className="weekly-goals">
-          {Object.entries(labels).map(([type, label]) => (
-            <div key={type}>
-              <strong>{label}</strong>
-              <span>{summary.completed[type]} completadas</span>
-              <small>
-                {rows.filter((row) => row.type === type && !row.completed).length} pendientes
-              </small>
-              <small>
-                Objetivo:{' '}
-                {type === 'swim' && profile.weeklyGoals.swimMax !== profile.weeklyGoals.swim
-                  ? `${profile.weeklyGoals.swim}–${profile.weeklyGoals.swimMax}`
-                  : profile.weeklyGoals[type]}{' '}
-                sesiones
-              </small>
-            </div>
-          ))}
-        </div>
-      </section>
-      <WeeklyPlanner
-        key={summary.start}
-        profile={profile}
-        sessions={sessions}
-        date={date}
-        cloud={cloud}
-        uid={uid}
-        disabled={busy}
-      />
-      {planningNotice && (
-        <p className="notice" role="status">
-          {planningNotice}
-        </p>
-      )}
-      <TrainingAutomation
-        key={`training-${summary.start}`}
-        profile={profile}
-        sessions={sessions}
-        date={date}
-        cloud={cloud}
-        uid={uid}
-        onSaved={(week, message) => {
-          setDate(week);
-          setPlanningNotice(message);
-        }}
-      />
-      <section className="session-list" aria-label="Sesiones de la semana">
-        {rows.map((row) => (
-          <article className="card personal-session" key={row.id}>
-            <div>
-              <span className="eyebrow">
-                {labels[row.type]} · {formatDate(row.date)}
-              </span>
-              <h2>{row.completed ? 'Sesión completada' : 'Sesión planificada'}</h2>
-              <p>
-                {row.minutes !== null ? `${row.minutes} min` : 'Duración no indicada'}
-                {row.distance !== null ? ` · ${row.distance} m` : ''}
-              </p>
-              {row.exercises.length > 0 && (
-                <ul>
-                  {row.exercises.map((exercise, index) => (
-                    <li key={index}>
-                      {exercise.name} · {exercise.sets} series · {exercise.repetitions}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {row.type !== 'swim' && !row.exercises.length && (
-                <p className="care-note">Pauta de ejercicios por concretar.</p>
-              )}
-              <p>
-                Molestias:{' '}
-                {row.discomfort === 'present'
-                  ? 'comunicadas'
-                  : row.discomfort === 'none'
-                    ? 'ninguna comunicada'
-                    : 'sin valorar'}
-                .
-              </p>
-              {row.notes && <p>{row.notes}</p>}
-              {row.origin?.edited && (
-                <p className="context-note">
-                  Detalles ajustados manualmente tras la planificación.
-                </p>
-              )}
-            </div>
-            <div className="session-actions">
-              <button
-                className="outline-button"
-                disabled={busy}
-                aria-label={`Editar sesión de ${labels[row.type]} del ${formatDate(row.date)}`}
-                onClick={() => onEdit(row)}
-              >
-                Editar sesión
-              </button>
-              <label className={`check-label ${row.completed ? 'done-button' : 'outline-button'}`}>
-                <input
-                  type="checkbox"
-                  checked={row.completed}
-                  disabled={busy}
-                  aria-label={`Sesión completada de ${labels[row.type]} del ${formatDate(row.date)}`}
-                  onChange={() => onToggle(row)}
-                />
-                {row.completed ? 'Completada' : 'Marcar completada'}
-              </label>
-            </div>
-          </article>
-        ))}
-      </section>
-      {!rows.length && (
-        <div className="empty-state">
-          <h2>Una semana por registrar</h2>
-          <p>
-            No hay sesiones guardadas en esta semana. No se ha supuesto ninguna actividad realizada.
-          </p>
-          <button className="outline-button" onClick={onSession}>
-            Añadir sesión
-          </button>
-        </div>
-      )}
-      <p className="care-note">
-        El calendario organiza los bloques que eliges. Si hay molestias lumbares, no se prescribe ni
-        se aumenta la carga desde la aplicación.
-      </p>
-    </div>
+    <WeekBoard
+      profile={profile}
+      sessions={sessions}
+      onSession={onSession}
+      onToggle={onToggle}
+      onEdit={onEdit}
+      cloud={cloud}
+      uid={uid}
+      busy={busy}
+    />
   );
 }
+
 export function ReliableLibrary() {
   const [filter, setFilter] = useState('Todos');
   return (

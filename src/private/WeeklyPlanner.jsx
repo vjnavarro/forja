@@ -11,8 +11,16 @@ import {
 import { formatDate } from '../domain/transformation.js';
 
 const weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-export function WeeklyPlanner({ profile, sessions, date, cloud, uid, disabled = false }) {
-  const [open, setOpen] = useState(false);
+export function WeeklyPlanner({
+  profile,
+  sessions,
+  date,
+  cloud,
+  uid,
+  disabled = false,
+  initiallyOpen = false,
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
   const [saved, setSaved] = useState(undefined);
   const [days, setDays] = useState([]);
   const [counts, setCounts] = useState(() => ({
@@ -124,8 +132,10 @@ export function WeeklyPlanner({ profile, sessions, date, cloud, uid, disabled = 
             <>
               {saved && (
                 <p className="context-note">
-                  Esta semana tiene {saved.sessionIds.length} actividades en el plan. Puedes añadir
-                  otras combinaciones de día y actividad; las existentes se conservan.
+                  Esta semana tiene{' '}
+                  {sessions.filter((row) => row.date >= start && row.date <= dates[6]).length}{' '}
+                  actividades guardadas. Puedes añadir otras combinaciones de día y actividad; las
+                  existentes se conservan.
                 </p>
               )}
               <form

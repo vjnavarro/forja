@@ -12,12 +12,18 @@ import {
 } from '../../src/services/training-programs.js';
 import { fingerprintSessions } from '../../src/domain/training.js';
 import {
+  prepareWeekReset,
+  resetTrainingWeek,
+  deleteTrainingSession,
+} from '../../src/services/week-maintenance.js';
+import {
   initializeTestEnvironment,
   assertSucceeds,
   assertFails,
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -699,4 +705,154 @@ test('program limits accept twelve templates and all combined days; malformed sc
     b.update(parent, { updatedAt: serverTimestamp() });
     await assertFails(b.commit());
   }
+});
+
+test('reset first week removes only its activities, plan and review and moves program start atomically', async () => {
+  const one = db('one', 'one@example.test');
+  await trainingSetup(one);
+  const rows = await completeTrainingWeek(one);
+  await saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+    wellbeing: 'good',
+    discomfort: 'none',
+    decision: 'maintain',
+    notes: '',
+    fingerprint: await fingerprintSessions(rows),
+  });
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  await writeSession(one, 'outside', {
+    ...plannedSession('2025-02-10', 'swim'),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  // A generated activity moved outside the deleted week must also survive.
+  const moved = rows[0].id;
+  const move = writeBatch(one);
+  move.update(doc(parent, 'sessions', moved), { date: '2025-02-11', updatedAt: serverTimestamp() });
+  move.update(parent, { updatedAt: serverTimestamp() });
+  await move.commit();
+  const beforeProgram = (await getDoc(doc(parent, 'private', 'program'))).data();
+  const preview = await prepareWeekReset(one, 'one', 'first', '2025-02-03');
+  assert.equal(preview.count, 2);
+  assert.equal(preview.completed, 2);
+  assert.equal(preview.canRestart, true);
+  const result = await resetTrainingWeek(one, 'one', 'first', '2025-02-03', {
+    token: preview.token,
+    restartProgram: true,
+  });
+  assert.deepEqual(result, { deleted: 2, nextWeek: '2025-02-10' });
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 2);
+  assert.equal((await getDoc(doc(parent, 'sessions', moved))).exists(), true);
+  assert.equal((await getDoc(doc(parent, 'sessions', 'outside'))).exists(), true);
+  assert.equal((await getDoc(doc(parent, 'plans', '2025-02-03'))).exists(), false);
+  assert.equal((await getDoc(doc(parent, 'reviews', '2025-02-03'))).exists(), false);
+  assert.equal((await getDocs(collection(parent, 'weights'))).size, 1);
+  assert.equal((await getDocs(collection(parent, 'templates'))).size, 3);
+  const program = (await getDoc(doc(parent, 'private', 'program'))).data();
+  assert.equal(program.startWeek, '2025-02-10');
+  assert.equal(program.weeks, beforeProgram.weeks);
+  assert.deepEqual(program.schedule, beforeProgram.schedule);
+  assert.deepEqual(program.templateIds, beforeProgram.templateIds);
+  // New first week bypasses the obsolete requirement to review the deleted one.
+  const proposal = await prepareTrainingProposal(one, 'one', 'first', '2025-02-10');
+  assert.equal(proposal.cycleWeek, 1);
+});
+test('week reset rejects stale sessions or program changes without partially deleting data', async () => {
+  const one = db('one', 'one@example.test');
+  await trainingSetup(one);
+  const preview = await prepareWeekReset(one, 'one', 'first', '2025-02-03');
+  await writeSession(one, 'later', {
+    ...plannedSession('2025-02-05', 'swim'),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  await assert.rejects(
+    resetTrainingWeek(one, 'one', 'first', '2025-02-03', {
+      token: preview.token,
+      restartProgram: true,
+    }),
+    /han cambiado/,
+  );
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 4);
+  const fresh = await prepareWeekReset(one, 'one', 'first', '2025-02-03');
+  const batch = writeBatch(one);
+  batch.update(doc(parent, 'private', 'program'), { weeks: 5, updatedAt: serverTimestamp() });
+  batch.update(parent, { updatedAt: serverTimestamp() });
+  await batch.commit();
+  await assert.rejects(
+    resetTrainingWeek(one, 'one', 'first', '2025-02-03', {
+      token: fresh.token,
+      restartProgram: true,
+    }),
+    /han cambiado/,
+  );
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 4);
+});
+test('owners can clear a full 21-activity week and recreate it; deletion requires ownership and parent stamp', async () => {
+  const one = db('one', 'one@example.test'),
+    other = db('two', 'two@example.test');
+  const draft = generateDraft('2025-02-03', [0, 1, 2, 3, 4, 5, 6], {
+    swim: 7,
+    strength: 7,
+    core: 7,
+  });
+  await acceptWeeklyPlan(one, 'one', 'first', draft);
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const ref = doc(parent, 'sessions', 'week-2025-02-03-swim');
+  await assertFails(deleteDoc(ref));
+  const unauthorized = writeBatch(other);
+  unauthorized.delete(doc(other, ref.path));
+  unauthorized.update(doc(other, parent.path), { updatedAt: serverTimestamp() });
+  await assertFails(unauthorized.commit());
+  const preview = await prepareWeekReset(one, 'one', 'first', '2025-02-03');
+  assert.equal(preview.canRestart, false);
+  await assert.rejects(
+    resetTrainingWeek(one, 'one', 'first', '2025-02-03', {
+      token: preview.token,
+      restartProgram: true,
+    }),
+    /primera semana/,
+  );
+  await resetTrainingWeek(one, 'one', 'first', '2025-02-03', { token: preview.token });
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 0);
+  assert.equal(await acceptWeeklyPlan(one, 'one', 'first', draft), 21);
+});
+test('deleting a single activity rejects stale versions and leaves sibling activities reusable', async () => {
+  const one = db('one', 'one@example.test');
+  await acceptWeeklyPlan(
+    one,
+    'one',
+    'first',
+    generateDraft('2025-02-03', [0], { swim: 1, strength: 1, core: 1 }),
+  );
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const ref = doc(parent, 'sessions', 'week-2025-02-03-swim');
+  const original = { ...(await getDoc(ref)).data(), id: ref.id };
+  const change = writeBatch(one);
+  change.update(ref, { completed: true, updatedAt: serverTimestamp() });
+  change.update(parent, { updatedAt: serverTimestamp() });
+  await change.commit();
+  await assert.rejects(deleteTrainingSession(one, 'one', 'first', original), /ha cambiado/);
+  await deleteTrainingSession(one, 'one', 'first', { ...(await getDoc(ref)).data(), id: ref.id });
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 2);
+  assert.equal(
+    await acceptWeeklyPlan(
+      one,
+      'one',
+      'first',
+      generateDraft('2025-02-03', [0], { swim: 1, strength: 0, core: 0 }),
+    ),
+    1,
+  );
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 3);
+});
+
+test('proposal outside program dates reports the period instead of demanding an unrelated review', async () => {
+  const one = db('one', 'one@example.test');
+  await trainingSetup(one);
+  for (const date of ['2025-01-27', '2025-03-03'])
+    await assert.rejects(
+      prepareTrainingProposal(one, 'one', 'first', date),
+      /fuera del periodo.*03\/02\/2025/,
+    );
 });
