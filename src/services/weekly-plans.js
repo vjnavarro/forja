@@ -11,47 +11,76 @@ import { planConflicts, validateDraft } from '../domain/planning.js';
 
 export async function acceptWeeklyPlan(db, uid, transformationId, input) {
   const draft = validateDraft(input);
+  const result = await commitPlan(db, uid, transformationId, async () => ({
+    draft,
+    preserveExisting: false,
+  }));
+  return result.created;
+}
+export async function commitPlan(db, uid, transformationId, prepare) {
   const parent = doc(db, 'users', uid, 'transformations', transformationId);
-  const target = doc(parent, 'plans', draft.weekStart);
   const sessions = collection(parent, 'sessions');
-  const refs = draft.sessions.map((session) => doc(sessions, `week-${session.date}`));
   return runTransaction(db, async (tx) => {
-    const [plan, transformation] = await Promise.all([tx.get(target), tx.get(parent)]);
-    if (plan.exists())
-      throw new Error('Esta semana ya tiene un plan aceptado. Puedes editar sus sesiones.');
+    const transformation = await tx.get(parent);
     if (!transformation.exists()) throw new Error('La transformación ya no está disponible.');
+    const prepared = await prepare(tx, parent),
+      draft = validateDraft(prepared.draft);
+    const target = doc(parent, 'plans', draft.weekStart),
+      plan = await tx.get(target);
     // Every session write also updates the parent (enforced by rules). This read
     // makes the transaction retry if the queried calendar changes concurrently.
     const week = await getDocs(
       query(sessions, where('date', '>=', draft.weekStart), where('date', '<=', draft.weekEnd)),
     );
     if (
+      !prepared.preserveExisting &&
       planConflicts(
         draft,
         week.docs.map((item) => item.data()),
       ).length
     )
       throw new Error(
-        'Ya hay sesiones en alguno de esos días. Revisa el borrador antes de guardarlo.',
+        'Ya existe alguna de esas actividades en ese día. Revisa el borrador antes de guardarlo.',
       );
+    const existingSlots = new Set(
+      week.docs.map((item) => `${item.data().date}:${item.data().type}`),
+    );
+    const fresh = draft.sessions.filter((row) => !existingSlots.has(`${row.date}:${row.type}`));
+    const refs = fresh.map((session) => doc(sessions, `week-${session.date}-${session.type}`));
     const existing = await Promise.all(refs.map((ref) => tx.get(ref)));
     if (existing.some((snapshot) => snapshot.exists()))
       throw new Error('Ya existen sesiones de este plan. Revisa la semana.');
+    if (!fresh.length) return { created: 0, preserved: draft.sessions.length };
+    const ids = [
+      ...new Set([...(plan.exists() ? plan.data().sessionIds : []), ...refs.map((ref) => ref.id)]),
+    ];
+    if (ids.length > 21)
+      throw new Error('Esta semana ya contiene el máximo de actividades del plan.');
     tx.set(target, {
+      version: 2,
       weekStart: draft.weekStart,
       weekEnd: draft.weekEnd,
       source: draft.source,
-      sessionIds: refs.map((ref) => ref.id),
-      createdAt: serverTimestamp(),
+      sessionIds: ids,
+      createdAt: plan.exists() ? plan.data().createdAt : serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
-    draft.sessions.forEach((session, index) =>
+    fresh.forEach((session, index) =>
       tx.set(refs[index], {
         ...session,
+        origin: session.origin ?? {
+          weekStart: draft.weekStart,
+          templateId: '',
+          title: '',
+          focus: '',
+          level: 0,
+          edited: false,
+        },
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       }),
     );
     tx.update(parent, { updatedAt: serverTimestamp() });
-    return refs.length;
+    return { created: refs.length, preserved: draft.sessions.length - fresh.length };
   });
 }

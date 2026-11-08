@@ -85,6 +85,9 @@ users/{uid}/transformations/{id}            configuración, sin contexto clínic
   weights/{id}                             date, kg, status, note
   sessions/{id}                            actividad, completado, series, molestias
   plans/{lunes}                            aceptación semanal y referencias a sesiones
+  templates/{id}                           variantes personales por enfoque/nivel
+  private/program                          días, actividades y duración de la programación
+  reviews/{lunes}                          revisión y huella de registros valorados
   private/context                          notas de salud y antecedentes
 ```
 

@@ -30,12 +30,12 @@ export function validateDraft(draft) {
   )
     throw new Error('La semana debe empezar en lunes.');
   if (
-    !['availability', 'previous-week', 'manual'].includes(draft.source) ||
+    !['availability', 'previous-week', 'manual', 'program', 'review'].includes(draft.source) ||
     !Array.isArray(draft.sessions) ||
     draft.sessions.length < 1 ||
-    draft.sessions.length > 7
+    draft.sessions.length > 21
   )
-    throw new Error('El borrador debe contener entre una y siete sesiones.');
+    throw new Error('El borrador debe contener entre una y veintiuna actividades.');
   const end = shiftDate(draft.weekStart, 6);
   const sessions = draft.sessions
     .map((row) => {
@@ -44,19 +44,19 @@ export function validateDraft(draft) {
         value.date < draft.weekStart ||
         value.date > end ||
         value.completed ||
-        value.discomfort !== 'not-reported' ||
-        value.exercises.length ||
-        value.minutes !== null ||
-        value.distance !== null
+        value.discomfort !== 'not-reported'
       )
         throw new Error(
-          'El borrador organiza fechas y actividades; los detalles se concretan al editar cada sesión.',
+          'El borrador solo admite actividades pendientes, con molestias sin valorar.',
         );
+      if (row.origin) value.origin = validateOrigin(row.origin, draft.weekStart);
       return value;
     })
     .sort((a, b) => a.date.localeCompare(b.date));
-  if (new Set(sessions.map((row) => row.date)).size !== sessions.length)
-    throw new Error('Elige un solo bloque del borrador por día.');
+  if (new Set(sessions.map((row) => `${row.date}:${row.type}`)).size !== sessions.length)
+    throw new Error(
+      'No repitas la misma actividad en el mismo día. Puedes combinar actividades diferentes.',
+    );
   return { weekStart: draft.weekStart, weekEnd: end, source: draft.source, sessions };
 }
 export function generateDraft(date, days, counts) {
@@ -79,25 +79,34 @@ export function generateDraft(date, days, counts) {
         queue.push(type);
         remaining[type]--;
       }
-  if (!queue.length || queue.length > available.length)
+  if (
+    !queue.length ||
+    !available.length ||
+    ACTIVITY_TYPES.some((type) => counts[type] > available.length)
+  )
     throw new Error(
-      'Selecciona al menos una sesión y suficientes días: un bloque por día disponible.',
+      'Selecciona días suficientes para cada actividad. Puedes combinar natación, fuerza y core en un día.',
     );
   return validateDraft({
     weekStart: dates[0],
     source: 'availability',
-    sessions: queue.map((type, index) =>
-      plannedSession(
-        dates[
-          available[
-            queue.length === 1
+    sessions: (() => {
+      const used = Object.fromEntries(ACTIVITY_TYPES.map((type) => [type, new Set()]));
+      return queue.map((type, index) => {
+        const base =
+          queue.length <= available.length
+            ? queue.length === 1
               ? 0
               : Math.floor((index * (available.length - 1)) / (queue.length - 1))
-          ]
-        ],
-        type,
-      ),
-    ),
+            : index % available.length;
+        const day = Array.from(
+          { length: available.length },
+          (_, offset) => available[(base + offset) % available.length],
+        ).find((day) => !used[type].has(day));
+        used[type].add(day);
+        return plannedSession(dates[day], type);
+      });
+    })(),
   });
 }
 export function repeatPreviousWeek(date, sessions) {
@@ -113,5 +122,32 @@ export function repeatPreviousWeek(date, sessions) {
   });
 }
 export function planConflicts(draft, sessions) {
-  return draft.sessions.filter((slot) => sessions.some((row) => row.date === slot.date));
+  return draft.sessions.filter((slot) =>
+    sessions.some((row) => row.date === slot.date && row.type === slot.type),
+  );
+}
+export function validateOrigin(value, weekStart) {
+  if (
+    !value ||
+    value.weekStart !== weekStart ||
+    typeof value.templateId !== 'string' ||
+    !/^[A-Za-z0-9_-]{0,100}$/.test(value.templateId) ||
+    !Number.isInteger(value.level) ||
+    value.level < 0 ||
+    value.level > 5 ||
+    typeof value.title !== 'string' ||
+    value.title.length > 80 ||
+    typeof value.focus !== 'string' ||
+    value.focus.length > 80 ||
+    typeof value.edited !== 'boolean'
+  )
+    throw new Error('La procedencia de la sesión no es válida.');
+  return {
+    weekStart,
+    templateId: value.templateId,
+    level: value.level,
+    title: value.title,
+    focus: value.focus,
+    edited: value.edited,
+  };
 }

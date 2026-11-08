@@ -251,7 +251,7 @@ export function WeightForm({ onSave, busy, error }) {
     </form>
   );
 }
-export function SessionForm({ onSave, busy, error, initial = null }) {
+export function SessionForm({ onSave, busy, error, initial = null, templateMode = false }) {
   const [type, setType] = useState(initial?.type ?? 'swim');
   const [exercises, setExercises] = useState(
     () => initial?.exercises.map((item) => ({ ...item })) ?? [],
@@ -265,18 +265,27 @@ export function SessionForm({ onSave, busy, error, initial = null }) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     try {
+      const value = validateSession({
+        date: templateMode ? today() : d.get('date'),
+        type,
+        completed: d.get('completed') === 'on',
+        minutes: decimal(d.get('minutes')),
+        distance: type === 'swim' ? decimal(d.get('distance')) : null,
+        exercises:
+          type === 'swim' ? [] : exercises.map((item) => ({ ...item, sets: Number(item.sets) })),
+        discomfort,
+        notes: d.get('notes'),
+      });
       await onSave(
-        validateSession({
-          date: d.get('date'),
-          type,
-          completed: d.get('completed') === 'on',
-          minutes: decimal(d.get('minutes')),
-          distance: type === 'swim' ? decimal(d.get('distance')) : null,
-          exercises:
-            type === 'swim' ? [] : exercises.map((item) => ({ ...item, sets: Number(item.sets) })),
-          discomfort,
-          notes: d.get('notes'),
-        }),
+        templateMode
+          ? {
+              ...value,
+              title: d.get('templateTitle'),
+              focus: d.get('templateFocus'),
+              level: Number(d.get('templateLevel')),
+              source: d.get('templateSource'),
+            }
+          : value,
       );
     } catch (err) {
       setValidation(err.message);
@@ -284,11 +293,61 @@ export function SessionForm({ onSave, busy, error, initial = null }) {
   }
   return (
     <form className="private-form" onSubmit={submit}>
+      {templateMode && (
+        <>
+          <label>
+            Nombre de la plantilla
+            <input
+              name="templateTitle"
+              defaultValue={initial?.title ?? ''}
+              maxLength={80}
+              required
+            />
+          </label>
+          <label>
+            Enfoque o grupo de trabajo
+            <input
+              name="templateFocus"
+              defaultValue={initial?.focus ?? ''}
+              maxLength={80}
+              placeholder="El enfoque que hayas definido"
+              required
+            />
+          </label>
+          <label>
+            Nivel de carga definido por ti (1–5)
+            <input
+              name="templateLevel"
+              type="number"
+              min="1"
+              max="5"
+              defaultValue={initial?.level ?? 1}
+              required
+            />
+          </label>
+          <label>
+            Procedencia o indicaciones de la pauta
+            <textarea
+              name="templateSource"
+              maxLength={1000}
+              rows={2}
+              defaultValue={initial?.source ?? ''}
+            />
+          </label>
+          <p className="care-note">
+            Introduce ejercicios y dosis que hayas definido y revisado para ti. Los niveles
+            superiores se usarán solo si solicitas y confirmas un aumento tras la revisión semanal.
+            FORJA no calcula ni valida clínicamente esas cargas.
+          </p>
+        </>
+      )}
       <div className="form-grid">
-        <label>
-          Fecha
-          <input type="date" name="date" defaultValue={initial?.date ?? today()} required />
-        </label>
+        {!templateMode && (
+          <label>
+            Fecha
+            <input type="date" name="date" defaultValue={initial?.date ?? today()} required />
+          </label>
+        )}
         <label>
           Actividad
           <select value={type} onChange={(e) => setType(e.target.value)}>
@@ -379,35 +438,39 @@ export function SessionForm({ onSave, busy, error, initial = null }) {
           </button>
         </fieldset>
       )}
-      <label>
-        Molestias
-        <select value={discomfort} onChange={(e) => setDiscomfort(e.target.value)}>
-          <option value="not-reported">Sin valorar</option>
-          <option value="none">Ninguna comunicada</option>
-          <option value="present">He notado molestias</option>
-        </select>
-      </label>
-      {discomfort === 'present' && (
-        <p className="care-note" role="status">
-          Registra qué has notado y sigue las indicaciones de tu profesional. FORJA no aumenta
-          ejercicios ni propone progresiones ante molestias.
-        </p>
+      {!templateMode && (
+        <>
+          <label>
+            Molestias
+            <select value={discomfort} onChange={(e) => setDiscomfort(e.target.value)}>
+              <option value="not-reported">Sin valorar</option>
+              <option value="none">Ninguna comunicada</option>
+              <option value="present">He notado molestias</option>
+            </select>
+          </label>
+          {discomfort === 'present' && (
+            <p className="care-note" role="status">
+              Registra qué has notado y sigue las indicaciones de tu profesional. FORJA no aumenta
+              ejercicios ni propone progresiones ante molestias.
+            </p>
+          )}
+          <label>
+            Observaciones (opcional)
+            <textarea name="notes" maxLength={2000} rows={3} defaultValue={initial?.notes ?? ''} />
+          </label>
+          <label className="check-label">
+            <input name="completed" type="checkbox" defaultChecked={initial?.completed ?? false} />
+            Sesión completada
+          </label>
+        </>
       )}
-      <label>
-        Observaciones (opcional)
-        <textarea name="notes" maxLength={2000} rows={3} defaultValue={initial?.notes ?? ''} />
-      </label>
-      <label className="check-label">
-        <input name="completed" type="checkbox" defaultChecked={initial?.completed ?? false} />
-        Sesión completada
-      </label>
       {(validation || error) && (
         <p className="form-error" role="alert">
           {validation || error}
         </p>
       )}
       <button className="primary-button" disabled={busy}>
-        {busy ? 'Guardando en la nube…' : 'Guardar sesión'}
+        {busy ? 'Guardando en la nube…' : templateMode ? 'Guardar plantilla' : 'Guardar sesión'}
       </button>
     </form>
   );

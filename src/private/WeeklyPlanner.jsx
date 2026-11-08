@@ -120,13 +120,14 @@ export function WeeklyPlanner({ profile, sessions, date, cloud, uid, disabled = 
           )}
           {saved === undefined ? (
             !error && <p role="status">Cargando planificación…</p>
-          ) : saved ? (
-            <p className="context-note">
-              Esta semana ya tiene un plan aceptado de {saved.sessionIds.length} sesiones. Puedes
-              editar las sesiones de la semana y registrar otras manualmente.
-            </p>
           ) : (
             <>
+              {saved && (
+                <p className="context-note">
+                  Esta semana tiene {saved.sessionIds.length} actividades en el plan. Puedes añadir
+                  otras combinaciones de día y actividad; las existentes se conservan.
+                </p>
+              )}
               <form
                 className="private-form"
                 onSubmit={(e) => {
@@ -159,8 +160,8 @@ export function WeeklyPlanner({ profile, sessions, date, cloud, uid, disabled = 
                 <fieldset disabled={busy || disabled}>
                   <legend>Bloques que quiero organizar</legend>
                   <p>
-                    Hasta siete bloques, uno por día. Los objetivos de tu perfil sirven de
-                    referencia; tú eliges esta semana.
+                    Hasta veintiuna actividades. Puedes combinar natación, fuerza y core cada día.
+                    Los objetivos de tu perfil sirven de referencia; tú eliges esta semana.
                   </p>
                   <div className="planner-counts">
                     {Object.entries(ACTIVITY_LABELS).map(([type, label]) => (

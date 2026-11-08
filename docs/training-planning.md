@@ -1,76 +1,103 @@
-# Planificación semanal
+# Programación, actividades combinadas y revisión semanal
 
-## Qué está implementado
+## Uso
 
-En Semana, desactiva incógnito, elige la semana y abre **Planificar semana**.
-Selecciona tus días disponibles y el número de bloques de natación, fuerza y core.
-El calendario distribuye hasta siete bloques, uno por día disponible. Los objetivos
-del perfil son una referencia inicial; el usuario decide cuántos bloques organizar.
+En Semana, desactiva incógnito. El calendario permite hasta 21 actividades: una
+por tipo y día. Puedes combinar natación, fuerza y core el mismo día. Generar un
+borrador no guarda datos; revisa y acepta las fechas antes de guardarlo.
 
-**Generar borrador** no guarda datos. Puedes cambiar fechas y actividades antes
-de marcar que has revisado el calendario y pulsar **Aceptar y guardar plan**.
-Si cambias la disponibilidad o las cantidades, se descarta el borrador anterior.
-No se sustituye una sesión existente: los días ocupados se indican como conflicto.
+Una semana ya aceptada admite actividades adicionales. Se bloquea repetir el
+mismo tipo en el mismo día. Los planes anteriores se conservan y se actualiza su
+formato al añadir nuevas actividades, sin borrar sus referencias ni sus sesiones.
 
-Las sesiones aceptadas quedan pendientes, sin duración, distancia, ejercicios ni
-dosis inventadas, y con molestias sin valorar. **Editar sesión** permite concretar
-estos datos, registrar observaciones y señalar qué se ha completado. Una edición
-basada en una versión antigua se rechaza si otro navegador/dispositivo ya ha
-modificado ese registro, para evitar sobrescribir datos recientes.
+## Configurar una vez para varias semanas
 
-**Reutilizar semana anterior** toma únicamente sus fechas relativas y actividades,
-tanto de sesiones planificadas como completadas. No copia duración, dosis,
-observaciones, molestias ni completados. Se revisa y acepta un nuevo borrador.
-El resumen semanal cuenta solo los completados explícitos e incluye las sesiones
-planificadas con `completed: false`.
+Abre **Mi programación y revisión semanal**:
 
-Incógnito retira el planificador y los detalles de sesiones de la interfaz. El
-borrador vive en memoria y se descarta al salir de la vista o cambiar de semana.
+1. En **Nueva plantilla**, define nombre, enfoque, tipo, duración/distancia y
+   ejercicios con su pauta. El nivel de carga (1–5) lo define el usuario; no es
+   una escala médica. Puedes indicar la procedencia o las indicaciones de la pauta.
+2. Crea variantes con distintos enfoques. Si quieres disponer de una progresión,
+   configura por separado una variante de nivel superior con sus dosis revisadas.
+   La aplicación no calcula nuevos pesos, series ni repeticiones.
+3. En **Crear programación**, elige la semana de inicio, de 1 a 12 semanas, las
+   actividades de cada día y hasta doce plantillas activas. Se pueden marcar las
+   tres actividades de un mismo día.
+4. En la primera semana, pulsa **Preparar propuesta de esta semana**, revisa las
+   variantes y confirma su aceptación. Las sesiones quedan pendientes de realizar.
+
+Se guarda la regla de repetición para N semanas. No se guardan anticipadamente
+los ejercicios de todas ellas: cada propuesta posterior se prepara a partir de
+la revisión de la semana anterior y se acepta de forma explícita. Esto permite
+adaptar lo pendiente sin reescribir registros ya guardados.
+
+Cuando existe una programación, el panel se abre al entrar en Semana y avisa de
+una revisión anterior pendiente. Incógnito retira el panel y sus detalles.
+
+## Cerrar una semana y preparar la siguiente
+
+**Cerrar y revisar esta semana** muestra los completados reales y pregunta por
+sensaciones, molestias y la decisión: mantener, usar un nivel inferior configurado
+o proponer uno superior configurado. Se requiere confirmar que se han revisado los
+registros. También se puede abrir la revisión de la semana anterior.
+
+La propuesta siguiente mantiene días y actividades. Alterna los grupos de enfoque
+que hayas definido y las variantes dentro de cada grupo, conservando exactamente
+las dosis de la plantilla elegida. La alternancia no certifica equilibrio muscular
+ni idoneidad clínica: depende de las plantillas personales disponibles.
+
+Un aumento requiere todas las actividades completadas, valoración favorable,
+ausencia explícita de molestias y una variante superior definida. Se utiliza el
+siguiente nivel disponible, sin inventar incrementos. Si no existe ninguna variante
+superior, hay que definirla o elegir mantener. Un tipo sin nivel superior conserva
+su nivel mientras otro tipo puede usar su variante superior; la propuesta lo indica.
+
+Si hay molestias registradas, valoración incompleta de molestias o sensaciones
+malas, se conserva el calendario y se dejan pendientes los ejercicios y dosis.
+Una respuesta favorable no ignora un registro de molestias. Si las dosis reales
+se han ajustado o ya no coinciden con las plantillas de origen, se pide revisar sus
+diferencias antes de reutilizarlas, en vez de restablecer automáticamente una carga.
+
+Al terminar las N semanas se guarda la revisión, pero no se prepara otra semana
+fuera del periodo hasta que el usuario ajuste la programación.
+
+## Protección de registros y concurrencia
+
+Aceptar una propuesta solo añade actividades nuevas. Las ya guardadas, manuales,
+completadas o ajustadas se conservan y se informa del número preservado. Para cambiar
+una sesión existente se usa **Editar sesión**. Dos aceptaciones simultáneas no crean
+duplicados. La edición rechaza una versión antigua si otro dispositivo la cambió.
+
+La revisión contiene una huella de los registros valorados. Si cambian las sesiones,
+hay que revisarlas de nuevo. Una propuesta deja de ser válida si cambian la
+programación, las plantillas o la revisión antes de aceptarla. Cada escritura de
+sesiones, programación, plantillas o revisiones actualiza también la transformación
+para que la transacción vuelva a comprobar cambios concurrentes.
 
 ## Fuentes y límites
 
-El calendario utiliza tu disponibilidad, los bloques que eliges y, si lo solicitas,
-la distribución de la semana anterior. No deduce cargas del peso, del sexo o del
-avatar. No interpreta el contexto clínico ni aumenta automáticamente los ejercicios.
-Los bloques de fuerza/core se señalan como pendientes de concretar cuando no se
-han indicado ejercicios.
+Las pautas proceden de las plantillas que configura el usuario y de sus registros.
+Los bloques sin una plantilla compatible quedan pendientes de concretar. No se
+deducen cargas del peso, del sexo o del avatar. La autorización general para empezar
+progresivamente no concreta ejercicios, dosis ni límites para una situación clínica.
 
-La biblioteca actual es una selección estática de ilustraciones y consultas en
-canales institucionales (Swim England y Mayo Clinic). No es un catálogo de
-prescripciones adaptado a una situación clínica concreta. La autorización general
-para empezar progresivamente no concreta ejercicios, dosis ni límites.
+La biblioteca estática con ilustraciones y consultas en Swim England/Mayo Clinic
+continúa siendo material de consulta, no un conjunto de prescripciones personales.
+No hay búsqueda médica ni conexión automática con ChatGPT. Los resúmenes se
+comparten por acción del usuario; el contexto clínico continúa siendo optativo.
+Se mantiene React, GitHub Pages y Spark, sin IA de pago ni Cloud Functions.
 
-Para una futura plantilla de ejercicios personalizada siguen pendientes:
-disponibilidad y material detallados; ejercicios y límites concretos revisados
-para la situación de la persona; y un catálogo con enlaces técnicos específicos,
-procedencia y estado de revisión. Los valores de la antigua demo no son dosis
-personales de entrenamiento. Si se comunican molestias no se generan progresiones.
+## Datos privados y activación
 
-No hay conexión automática con ChatGPT ni búsquedas médicas automáticas. Los
-resúmenes se comparten por acción del usuario; el contexto de salud es optativo.
-Se mantiene React, GitHub Pages y Firestore Spark, sin IA de pago ni Cloud Functions.
+Bajo `users/{uid}/transformations/{id}` se añaden `templates/{id}`,
+`private/program` y `reviews/{lunes}`. Los planes V2 admiten hasta 21 referencias
+con tipos de actividad en sus IDs; mantienen compatibilidad con referencias V1.
+Las nuevas sesiones verifican el enlace al plan y sus fechas. La validación de los
+IDs evita superar el límite de expresiones de las reglas al guardar 21 actividades.
+Cada sesión generada conserva su procedencia (plantilla, enfoque y nivel); una
+edición manual queda indicada. Todos estos documentos siguen limitados al propietario
+autorizado. No se incluye información personal en el código o los fixtures.
 
-## Guardado y acceso
-
-Cada plan aceptado se registra en `users/{uid}/transformations/{id}/plans/{lunes}`,
-con procedencia, fechas e IDs de las sesiones. Solo se admite un plan aceptado por
-semana. Su aceptación y la creación de las sesiones son una transacción: dos
-aceptaciones simultáneas no duplican ni sobrescriben registros. Después se editan
-las sesiones individualmente; no hay sustitución masiva ni borrado desde este flujo.
-
-Cada escritura de sesiones actualiza el documento de la transformación en el mismo
-commit. Las reglas exigen ese cambio. El planificador lee ese documento antes de
-consultar el calendario: un cambio concurrente hace reintentar su transacción y
-volver a comprobar los conflictos. Las reglas también validan hasta siete
-referencias, un bloque por fecha, sin completados ni dosis en la aceptación inicial,
-y acceso exclusivamente del propietario autorizado.
-
-## Activación de una instalación existente
-
-Este módulo requiere publicar la nueva versión de `firestore.rules`.
-Despliega primero el cliente de esta versión; a continuación publica las nuevas
-reglas y recarga la web. Hasta publicar las reglas, el planificador mostrará un
-aviso de activación pendiente. No se migran ni borran historiales. El cliente
-anterior no actualizaba el documento padre al escribir sesiones y no es compatible
-con las reglas nuevas para esas escrituras. No hacen falta nuevas variables ni
-credenciales administrativas en el navegador.
+Para activar esta versión: desplegar primero el cliente, publicar después las
+reglas actualizadas y recargar la web. No hay migración destructiva ni nuevas
+variables. Las nuevas colecciones se crean al guardar desde la aplicación.

@@ -89,7 +89,7 @@ test('previous-week reuse copies calendar only, preserving no doses, pain or com
   assert.ok(!draft.sessions[0].notes.includes('Private'));
   assert.throws(() => repeatPreviousWeek('2025-03-10', previous));
 });
-test('manual changes stay in the selected week with one block per day', () => {
+test('manual changes stay in the selected week without repeating an activity on the same day', () => {
   const draft = generateDraft('2025-02-03', [0, 2], { swim: 1, strength: 0, core: 1 });
   assert.throws(() =>
     validateDraft({ ...draft, sessions: [...draft.sessions, { ...draft.sessions[0] }] }),
@@ -100,16 +100,30 @@ test('manual changes stay in the selected week with one block per day', () => {
   assert.throws(() =>
     validateDraft({ ...draft, sessions: [{ ...draft.sessions[0], completed: true }] }),
   );
-  assert.throws(() =>
-    validateDraft({ ...draft, sessions: [{ ...draft.sessions[0], minutes: 25 }] }),
+  assert.equal(
+    validateDraft({ ...draft, sessions: [{ ...draft.sessions[0], minutes: 25 }] }).sessions[0]
+      .minutes,
+    25,
   );
   assert.throws(() => validateDraft({ ...draft, weekStart: '2025-02-04' }));
 });
-test('any existing session on the proposed day is a conflict, regardless of activity or completion', () => {
+test('different activities can share a day; the same activity cannot be duplicated', () => {
   const draft = generateDraft('2025-02-03', [0, 2], { swim: 1, strength: 0, core: 1 });
   const conflicts = planConflicts(draft, [
     { ...plannedSession('2025-02-03', 'strength'), completed: true },
   ]);
-  assert.equal(conflicts.length, 1);
-  assert.equal(conflicts[0].date, '2025-02-03');
+  assert.equal(conflicts.length, 0);
+  assert.equal(
+    planConflicts(draft, [{ ...plannedSession('2025-02-03', 'swim'), completed: true }]).length,
+    1,
+  );
+});
+test('the generator permits all three activities on every selected day', () => {
+  const draft = generateDraft('2025-02-03', [0, 1, 2, 3, 4, 5, 6], {
+    swim: 7,
+    strength: 7,
+    core: 7,
+  });
+  assert.equal(draft.sessions.length, 21);
+  assert.equal(new Set(draft.sessions.map((row) => `${row.date}:${row.type}`)).size, 21);
 });

@@ -35,6 +35,14 @@ import {
 import { cloudConfigured, useEmulators } from './config.js';
 import { validateAppearance } from '../domain/avatars.js';
 import { acceptWeeklyPlan } from './weekly-plans.js';
+import { decodeProgram } from '../domain/training.js';
+import {
+  saveTrainingTemplate,
+  saveTrainingProgram,
+  saveTrainingReview,
+  prepareTrainingProposal,
+  acceptTrainingProposal,
+} from './training-programs.js';
 let instance;
 let pending;
 export function getCloud() {
@@ -171,6 +179,34 @@ async function initializeCloud() {
     acceptWeeklyPlan(uid, id, draft) {
       return acceptWeeklyPlan(db, uid, id, draft);
     },
+    watchTrainingProgram(uid, id, next, error) {
+      return onSnapshot(
+        doc(trans(uid, id), 'private', 'program'),
+        (snap) => next(snap.exists() ? decodeProgram(snap.data()) : null),
+        error,
+      );
+    },
+    watchTrainingTemplates(uid, id, next, error) {
+      return onSnapshot(
+        query(rows(uid, id, 'templates'), orderBy('createdAt', 'asc')),
+        (snap) => next(snap.docs.map((row) => ({ ...row.data(), id: row.id }))),
+        error,
+      );
+    },
+    watchTrainingReview(uid, id, start, next, error) {
+      return onSnapshot(
+        doc(trans(uid, id), 'reviews', start),
+        (snap) => next(snap.exists() ? snap.data() : null),
+        error,
+      );
+    },
+    saveTrainingTemplate: (uid, id, value, original) =>
+      saveTrainingTemplate(db, uid, id, value, original),
+    saveTrainingProgram: (uid, id, value) => saveTrainingProgram(db, uid, id, value),
+    saveTrainingReview: (uid, id, start, value) => saveTrainingReview(db, uid, id, start, value),
+    prepareTrainingProposal: (uid, id, date) => prepareTrainingProposal(db, uid, id, date),
+    acceptTrainingProposal: (uid, id, date, token) =>
+      acceptTrainingProposal(db, uid, id, date, token),
     createTransformation(uid, profile) {
       return create(uid, profile, [
         {
@@ -226,7 +262,11 @@ async function initializeCloud() {
           throw new Error(
             'La sesión ha cambiado. Cierra y vuelve a abrir el formulario para revisarla.',
           );
-        tx.update(ref, { ...next, updatedAt: serverTimestamp() });
+        tx.update(ref, {
+          ...next,
+          ...(original.origin ? { origin: { ...original.origin, edited: true } } : {}),
+          updatedAt: serverTimestamp(),
+        });
         tx.update(trans(uid, id), { updatedAt: serverTimestamp() });
       });
     },

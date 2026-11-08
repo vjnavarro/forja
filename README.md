@@ -108,11 +108,14 @@ reales fuera del repositorio, de `public/` y de snapshots compartidos del entorn
 
 ## Planificación de entrenamientos
 
-La vista Semana organiza un borrador de hasta siete bloques según los días y
-actividades elegidos, permite revisarlo y aceptarlo, y reutiliza la distribución
-de la semana anterior. Las sesiones se editan individualmente y se guardan
-pendientes hasta que el usuario las marque como completadas. El calendario no
-prescribe ejercicios ni dosis ni interpreta una situación clínica.
+La vista Semana permite combinar natación, fuerza y core en un mismo día. Puedes
+guardar una programación de 1 a 12 semanas, definir variantes de ejercicios por
+enfoque y nivel y revisar cada semana antes de aceptar la propuesta siguiente.
+La alternancia utiliza las dosis de tus plantillas; no calcula incrementos.
+Los aumentos requieren revisión favorable, ausencia explícita de molestias,
+actividades completadas y una variante superior definida. Lo ya guardado se
+conserva; las sesiones se editan individualmente. No hay prescripción médica
+automática ni una conexión de IA que reciba el historial.
 [Funcionamiento, fuentes, límites y activación](docs/training-planning.md).
 
 ## Publicación
