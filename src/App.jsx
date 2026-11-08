@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Activity, ArrowRight, ArrowUpRight, LogOut, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react';
 import { Brand } from './components/Brand.jsx';
+import { AccountMenu } from './components/AccountMenu.jsx';
 import { cloudConfigured } from './services/config.js';
 const TransformationSpace = lazy(() =>
   import('./private/TransformationSpace.jsx').then((module) => ({
@@ -61,8 +62,10 @@ export default function App() {
       await cloud?.logout();
       setSession({ status: 'signed-out', user: null });
       navigate('/');
+      return true;
     } catch {
       setError('No se pudo cerrar la sesión. Vuelve a intentarlo.');
+      return false;
     }
   }, [cloud, navigate]);
   async function login() {
@@ -120,11 +123,8 @@ export default function App() {
           </button>
           <button onClick={() => navigate('/transformaciones')}>Mi Transformación</button>
         </nav>
-        {session.status === 'allowed' ? (
-          <button className="outline-button" onClick={logout}>
-            <LogOut size={15} />
-            Cerrar sesión
-          </button>
+        {session.status === 'allowed' && session.user ? (
+          <AccountMenu user={session.user} onLogout={logout} />
         ) : (
           <button
             className="primary-button"

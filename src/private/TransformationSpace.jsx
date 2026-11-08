@@ -8,7 +8,6 @@ import {
   HeartPulse,
   LayoutDashboard,
   Library,
-  LogOut,
   Plus,
   SlidersHorizontal,
   Scale,
@@ -16,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Brand } from '../components/Brand.jsx';
+import { AccountMenu } from '../components/AccountMenu.jsx';
 import { TransformationDashboard } from './TransformationDashboard.jsx';
 import { Dialog, ProfileForm, SessionForm, WeightForm } from './Forms.jsx';
 import { AppearanceForm } from './AvatarPicker.jsx';
@@ -103,10 +103,7 @@ export function TransformationSpace({ cloud, user, path, navigate, onLogout, err
         <button aria-label="Volver al portal FORJA" onClick={() => navigate('/')}>
           <Brand />
         </button>
-        <button className="outline-button" onClick={onLogout}>
-          <LogOut size={16} />
-          Cerrar sesión
-        </button>
+        <AccountMenu user={user} onLogout={onLogout} />
       </header>
       <main className="portal-main">
         <section className="portal-heading">
@@ -338,9 +335,7 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
               {incognito ? <EyeOff size={18} /> : <Eye size={18} />}
               <span>{incognito ? 'Incógnito' : 'Cifras visibles'}</span>
             </button>
-            <button className="icon-button" aria-label="Cerrar sesión" onClick={onLogout}>
-              <LogOut size={18} />
-            </button>
+            <AccountMenu user={user} onLogout={onLogout} />
           </div>
         </header>
         <section className="page-heading">
