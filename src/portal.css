@@ -521,6 +521,17 @@ button:disabled {
 .personal-session button {
   flex-shrink: 0;
 }
+.planner { margin-top: 20px; margin-bottom: 20px; }
+.planner .section-head { flex-wrap: wrap; gap: 12px; }
+.planner h2 { display: flex; align-items: center; gap: 9px; }
+.planner-days { display: grid; grid-template-columns: repeat(auto-fit,minmax(115px,1fr)); gap: 12px; }
+.planner-counts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.planner-row { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin-bottom: 18px; }
+.planner .planner-draft { border-top: 1px solid var(--border); padding-top: 20px; }
+.session-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+@media (max-width: 450px) {
+  .planner-counts, .planner-row { grid-template-columns: 1fr; }
+}
 .care-note {
   font-size: 12px;
   line-height: 1.9;

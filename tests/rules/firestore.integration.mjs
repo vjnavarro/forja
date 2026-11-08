@@ -1,6 +1,8 @@
 import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import { acceptWeeklyPlan } from '../../src/services/weekly-plans.js';
+import { generateDraft, plannedSession } from '../../src/domain/planning.js';
 import {
   initializeTestEnvironment,
   assertSucceeds,
@@ -46,6 +48,14 @@ const weight = () => ({
   updatedAt: serverTimestamp(),
 });
 const db = (uid, email) => env.authenticatedContext(uid, claims(email)).firestore();
+function writeSession(database, id, data) {
+  const batch = writeBatch(database);
+  batch.set(doc(database, 'users', 'one', 'transformations', 'first', 'sessions', id), data);
+  batch.update(doc(database, 'users', 'one', 'transformations', 'first'), {
+    updatedAt: serverTimestamp(),
+  });
+  return batch.commit();
+}
 before(async () => {
   env = await initializeTestEnvironment({
     projectId,
@@ -268,11 +278,9 @@ test('sessions validate every exercise and retain explicit completion and discom
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
+  await assertSucceeds(writeSession(one, 'good', session));
   await assertSucceeds(
-    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'good'), session),
-  );
-  await assertSucceeds(
-    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'six'), {
+    writeSession(one, 'six', {
       ...session,
       exercises: Array.from({ length: 6 }, () => ({
         name: 'Ejercicio sintético',
@@ -282,25 +290,138 @@ test('sessions validate every exercise and retain explicit completion and discom
     }),
   );
   await assertFails(
-    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'bad'), {
+    writeSession(one, 'bad', {
       ...session,
       exercises: [{ name: { bad: true }, sets: -1, repetitions: '5' }],
     }),
   );
   await assertFails(
-    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'bad'), {
+    writeSession(one, 'bad', {
       ...session,
       completed: 'yes',
     }),
   );
   await assertFails(
-    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'too-many'), {
+    writeSession(one, 'too-many', {
       ...session,
       exercises: Array.from({ length: 7 }, () => ({
         name: 'Ejercicio',
         sets: 1,
         repetitions: '5',
       })),
+    }),
+  );
+});
+
+test('accepting a seven-slot plan is atomic, private and stores only uncompleted undosed sessions', async () => {
+  const one = db('one', 'one@example.test');
+  const draft = generateDraft('2025-02-03', [0, 1, 2, 3, 4, 5, 6], {
+    swim: 3,
+    strength: 2,
+    core: 2,
+  });
+  assert.equal(await acceptWeeklyPlan(one, 'one', 'first', draft), 7);
+  const plan = doc(one, 'users', 'one', 'transformations', 'first', 'plans', '2025-02-03');
+  assert.equal((await getDoc(plan)).data().sessionIds.length, 7);
+  const sessions = await getDocs(
+    collection(one, 'users', 'one', 'transformations', 'first', 'sessions'),
+  );
+  assert.equal(sessions.size, 7);
+  assert.ok(
+    sessions.docs.every(
+      (row) => row.data().completed === false && row.data().exercises.length === 0,
+    ),
+  );
+  await assertFails(
+    getDoc(
+      doc(
+        db('two', 'two@example.test'),
+        'users',
+        'one',
+        'transformations',
+        'first',
+        'plans',
+        '2025-02-03',
+      ),
+    ),
+  );
+  await assertFails(acceptWeeklyPlan(db('two', 'two@example.test'), 'one', 'first', draft));
+  await assertFails(updateDoc(plan, { source: 'manual' }));
+});
+test('simultaneous acceptance does not duplicate or replace a plan', async () => {
+  const one = db('one', 'one@example.test');
+  const draft = generateDraft('2025-02-03', [0, 2], { swim: 1, strength: 0, core: 1 });
+  const results = await Promise.allSettled([
+    acceptWeeklyPlan(one, 'one', 'first', draft),
+    acceptWeeklyPlan(one, 'one', 'first', draft),
+  ]);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(
+    (await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))).size,
+    2,
+  );
+  const session = doc(
+    one,
+    'users',
+    'one',
+    'transformations',
+    'first',
+    'sessions',
+    'week-2025-02-03',
+  );
+  const batch = writeBatch(one);
+  batch.update(session, { completed: true, updatedAt: serverTimestamp() });
+  batch.update(doc(one, 'users', 'one', 'transformations', 'first'), {
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+  await assert.rejects(acceptWeeklyPlan(one, 'one', 'first', draft));
+  assert.equal((await getDoc(session)).data().completed, true);
+});
+test('existing sessions are preserved and malformed or incomplete plan writes are denied', async () => {
+  const one = db('one', 'one@example.test');
+  await writeSession(one, 'manual', {
+    ...plannedSession('2025-02-03', 'swim'),
+    completed: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  await assert.rejects(
+    acceptWeeklyPlan(
+      one,
+      'one',
+      'first',
+      generateDraft('2025-02-03', [0], { swim: 1, strength: 0, core: 0 }),
+    ),
+    /Ya hay sesiones/,
+  );
+  assert.equal(
+    (await getDocs(collection(one, 'users', 'one', 'transformations', 'first', 'sessions'))).size,
+    1,
+  );
+  const plan = doc(one, 'users', 'one', 'transformations', 'first', 'plans', '2025-02-10');
+  for (const data of [
+    {
+      weekStart: '2025-02-10',
+      weekEnd: '2025-02-16',
+      source: 'availability',
+      sessionIds: ['week-2025-02-10-0'],
+    },
+    { weekStart: '2025-02-10', weekEnd: '2025-02-17', source: 'availability', sessionIds: [] },
+    { weekStart: '2025-02-10', weekEnd: '2025-02-16', source: 'unknown', sessionIds: [] },
+  ]) {
+    const batch = writeBatch(one);
+    batch.set(plan, { ...data, createdAt: serverTimestamp() });
+    batch.update(doc(one, 'users', 'one', 'transformations', 'first'), {
+      updatedAt: serverTimestamp(),
+    });
+    await assertFails(batch.commit());
+  }
+  await assertFails(
+    setDoc(doc(one, 'users', 'one', 'transformations', 'first', 'sessions', 'untracked'), {
+      ...plannedSession('2025-02-10', 'swim'),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     }),
   );
 });

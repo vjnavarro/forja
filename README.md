@@ -108,9 +108,12 @@ reales fuera del repositorio, de `public/` y de snapshots compartidos del entorn
 
 ## Planificación de entrenamientos
 
-La vista Semana registra objetivos y sesiones elegidos por el usuario. Todavía no
-genera planes de entrenamiento ni adapta automáticamente los ejercicios a una
-situación clínica. [Estado, fuentes y diseño de la siguiente versión](docs/training-planning.md).
+La vista Semana organiza un borrador de hasta siete bloques según los días y
+actividades elegidos, permite revisarlo y aceptarlo, y reutiliza la distribución
+de la semana anterior. Las sesiones se editan individualmente y se guardan
+pendientes hasta que el usuario las marque como completadas. El calendario no
+prescribe ejercicios ni dosis ni interpreta una situación clínica.
+[Funcionamiento, fuentes, límites y activación](docs/training-planning.md).
 
 ## Publicación
 

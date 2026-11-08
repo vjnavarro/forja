@@ -37,6 +37,10 @@ service cloud.firestore {
         && d.createdAt is timestamp && d.updatedAt == request.time;
     }
     function parentOwner(uid,tid) {return getAfter(/databases/$(database)/documents/users/$(uid)/transformations/$(tid)).data.ownerUid == uid;}
+    function sessionParent(uid,tid) {
+      let p = getAfter(/databases/$(database)/documents/users/$(uid)/transformations/$(tid)).data;
+      return p.ownerUid == uid && p.updatedAt == request.time;
+    }
     function weight() {
       let d=request.resource.data;
       return d.keys().hasOnly(['date','kg','status','note','createdAt','updatedAt'])
@@ -73,6 +77,30 @@ service cloud.firestore {
         && shortText(d.activityNotes,5000) && shortText(d.treatmentNotes,5000) && shortText(d.lumbarNotes,5000)
         && shortText(d.medicalNotes,5000) && shortText(d.sourceNotes,5000) && d.updatedAt == request.time;
     }
+    function linkedSlot(uid,tid,ids,index,start,end) {
+      let id = ids[index];
+      let s = getAfter(/databases/$(database)/documents/users/$(uid)/transformations/$(tid)/sessions/$(id)).data;
+      return id is string && id == 'week-' + s.date
+        && s.completed == false && s.discomfort == 'not-reported' && s.minutes == null && s.distance == null
+        && s.exercises.size() == 0 && s.date >= start && s.date <= end;
+    }
+    function plannedSlot(uid,tid,ids,index,start,end) {
+      return ids.size() <= index || linkedSlot(uid,tid,ids,index,start,end);
+    }
+    function weeklyPlan(uid,tid,week) {
+      let d = request.resource.data;
+      let ids = d.sessionIds;
+      return d.keys().hasOnly(['weekStart','weekEnd','source','sessionIds','createdAt'])
+        && d.keys().hasAll(['weekStart','weekEnd','source','sessionIds','createdAt'])
+        && d.weekStart == week && validDate(d.weekStart) && validDate(d.weekEnd)
+        && timestamp.value(d.weekEnd + 'T00:00:00Z') == timestamp.value(d.weekStart + 'T00:00:00Z') + duration.value(6,'d')
+        && d.source in ['availability','previous-week','manual'] && d.createdAt == request.time
+        && ids is list && ids.size() > 0 && ids.size() <= 7 && ids.toSet().size() == ids.size()
+        && plannedSlot(uid,tid,ids,0,d.weekStart,d.weekEnd) && plannedSlot(uid,tid,ids,1,d.weekStart,d.weekEnd)
+        && plannedSlot(uid,tid,ids,2,d.weekStart,d.weekEnd) && plannedSlot(uid,tid,ids,3,d.weekStart,d.weekEnd)
+        && plannedSlot(uid,tid,ids,4,d.weekStart,d.weekEnd) && plannedSlot(uid,tid,ids,5,d.weekStart,d.weekEnd)
+        && plannedSlot(uid,tid,ids,6,d.weekStart,d.weekEnd);
+    }
     match /members/{email} {
       allow get: if googleUser() && request.auth.token.email.lower() == email;
       allow list, write: if false;
@@ -82,6 +110,11 @@ service cloud.firestore {
       allow create: if owner(uid) && profile(uid) && request.resource.data.createdAt == request.time;
       allow update: if owner(uid) && profile(uid) && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if false;
+      match /plans/{week} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && sessionParent(uid,tid) && weeklyPlan(uid,tid,week);
+        allow update,delete: if false;
+      }
       match /weights/{id} {
         allow read: if owner(uid);
         allow create: if owner(uid) && parentOwner(uid,tid) && weight() && request.resource.data.createdAt == request.time;
@@ -90,8 +123,8 @@ service cloud.firestore {
       }
       match /sessions/{id} {
         allow read: if owner(uid);
-        allow create: if owner(uid) && parentOwner(uid,tid) && session() && request.resource.data.createdAt == request.time;
-        allow update: if owner(uid) && parentOwner(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
+        allow create: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == request.time;
+        allow update: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
         allow delete: if false;
       }
       match /private/context {

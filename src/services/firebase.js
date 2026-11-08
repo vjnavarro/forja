@@ -23,6 +23,7 @@ import {
   setDoc,
   updateDoc,
   writeBatch,
+  runTransaction,
 } from 'firebase/firestore';
 import {
   parseImport,
@@ -33,6 +34,7 @@ import {
 
 import { cloudConfigured, useEmulators } from './config.js';
 import { validateAppearance } from '../domain/avatars.js';
+import { acceptWeeklyPlan } from './weekly-plans.js';
 let instance;
 let pending;
 export function getCloud() {
@@ -159,6 +161,16 @@ async function initializeCloud() {
         error,
       );
     },
+    watchWeeklyPlan(uid, id, week, next, error) {
+      return onSnapshot(
+        doc(trans(uid, id), 'plans', week),
+        (snap) => next(snap.exists() ? snap.data() : null),
+        error,
+      );
+    },
+    acceptWeeklyPlan(uid, id, draft) {
+      return acceptWeeklyPlan(db, uid, id, draft);
+    },
     createTransformation(uid, profile) {
       return create(uid, profile, [
         {
@@ -184,16 +196,38 @@ async function initializeCloud() {
       await batch.commit();
     },
     async addSession(uid, id, value) {
-      await setDoc(doc(rows(uid, id, 'sessions')), {
+      const batch = writeBatch(db);
+      batch.set(doc(rows(uid, id, 'sessions')), {
         ...validateSession(value),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      batch.update(trans(uid, id), { updatedAt: serverTimestamp() });
+      await batch.commit();
     },
     toggleSession(uid, id, session) {
-      return updateDoc(doc(rows(uid, id, 'sessions'), session.id), {
+      const batch = writeBatch(db);
+      batch.update(doc(rows(uid, id, 'sessions'), session.id), {
         completed: !session.completed,
         updatedAt: serverTimestamp(),
+      });
+      batch.update(trans(uid, id), { updatedAt: serverTimestamp() });
+      return batch.commit();
+    },
+    editSession(uid, id, original, value) {
+      const next = validateSession(value);
+      const ref = doc(rows(uid, id, 'sessions'), original.id);
+      return runTransaction(db, async (tx) => {
+        const [current] = await Promise.all([tx.get(ref), tx.get(trans(uid, id))]);
+        if (
+          !current.exists() ||
+          current.data().updatedAt?.toMillis() !== original.updatedAt?.toMillis()
+        )
+          throw new Error(
+            'La sesión ha cambiado. Cierra y vuelve a abrir el formulario para revisarla.',
+          );
+        tx.update(ref, { ...next, updatedAt: serverTimestamp() });
+        tx.update(trans(uid, id), { updatedAt: serverTimestamp() });
       });
     },
     saveAppearance(uid, id, value) {

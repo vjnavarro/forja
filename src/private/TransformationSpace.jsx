@@ -195,6 +195,7 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
   const [incognito, setIncognito] = useState(true);
   const [tab, setTab] = useState('dashboard');
   const [form, setForm] = useState(null);
+  const [editingSession, setEditingSession] = useState(null);
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -257,6 +258,7 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
   };
   const onSession = () => {
     setError('');
+    setEditingSession(null);
     setForm('session');
   };
   const nav = () =>
@@ -414,6 +416,13 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
                 incognito={incognito}
                 onReveal={() => setIncognito(false)}
                 onSession={onSession}
+                onEdit={(session) => {
+                  setError('');
+                  setEditingSession(session);
+                  setForm('edit-session');
+                }}
+                cloud={cloud}
+                uid={user.uid}
                 onToggle={(session) =>
                   write(
                     () => cloud.toggleSession(user.uid, profile.id, session),
@@ -470,7 +479,9 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
               ? 'Personalizar figuras'
               : form === 'weight'
                 ? 'Registrar pesaje'
-                : 'Registrar sesión'
+                : form === 'edit-session'
+                  ? 'Editar sesión'
+                  : 'Registrar sesión'
           }
           onClose={() => {
             if (!busy) setForm(null);
@@ -501,11 +512,15 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
             />
           ) : (
             <SessionForm
+              initial={form === 'edit-session' ? editingSession : null}
               busy={busy}
               error={error}
               onSave={(value) =>
                 write(
-                  () => cloud.addSession(user.uid, profile.id, value),
+                  () =>
+                    form === 'edit-session'
+                      ? cloud.editSession(user.uid, profile.id, editingSession, value)
+                      : cloud.addSession(user.uid, profile.id, value),
                   'Sesión guardada en tu cuenta.',
                 )
               }
