@@ -1,3 +1,5 @@
+import { today } from '../domain/transformation.js';
+import { CatalogSessionForm, CatalogReferenceDetails } from './CatalogLibrary.jsx';
 import { useEffect, useState } from 'react';
 import {
   Activity,
@@ -196,6 +198,7 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
   const [tab, setTab] = useState('dashboard');
   const [form, setForm] = useState(null);
   const [editingSession, setEditingSession] = useState(null);
+  const [catalogPreset, setCatalogPreset] = useState(null);
   const [error, setError] = useState('');
   const [loadError, setLoadError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -431,6 +434,11 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
                 incognito={incognito}
                 onReveal={() => setIncognito(false)}
                 onSession={onSession}
+                onCatalog={(preset) => {
+                  setError('');
+                  setCatalogPreset(preset);
+                  setForm('catalog');
+                }}
                 onEdit={(session) => {
                   setError('');
                   setEditingSession(session);
@@ -447,7 +455,16 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
                 busy={busy}
               />
             )}{' '}
-            {tab === 'library' && <ReliableLibrary />}{' '}
+            {tab === 'library' && (
+              <ReliableLibrary
+                canPlan={!incognito}
+                onPlan={(sessionId) => {
+                  setError('');
+                  setCatalogPreset({ sessionId, date: today() });
+                  setForm('catalog');
+                }}
+              />
+            )}{' '}
             {tab === 'summary' && (
               <WeeklyExport
                 profile={profile}
@@ -490,19 +507,34 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
       {form && (
         <Dialog
           title={
-            form === 'appearance'
-              ? 'Personalizar figuras'
-              : form === 'weight'
-                ? 'Registrar pesaje'
-                : form === 'edit-session'
-                  ? 'Editar sesión'
-                  : 'Registrar sesión'
+            form === 'catalog'
+              ? 'Añadir sesión FORJA'
+              : form === 'appearance'
+                ? 'Personalizar figuras'
+                : form === 'weight'
+                  ? 'Registrar pesaje'
+                  : form === 'edit-session'
+                    ? 'Editar sesión'
+                    : 'Registrar sesión'
           }
           onClose={() => {
             if (!busy) setForm(null);
           }}
         >
-          {form === 'appearance' ? (
+          {form === 'catalog' ? (
+            <CatalogSessionForm
+              initialSessionId={catalogPreset?.sessionId}
+              initialDate={catalogPreset?.date ?? today()}
+              busy={busy}
+              error={error}
+              onSave={(value) =>
+                write(
+                  () => cloud.addCatalogSession(user.uid, profile.id, value),
+                  'Referencia FORJA guardada en el calendario. Pauta personal pendiente de concretar.',
+                )
+              }
+            />
+          ) : form === 'appearance' ? (
             <AppearanceForm
               profile={profile}
               busy={busy}
@@ -526,20 +558,28 @@ function PrivateTransformation({ profile, cloud, user, navigate, onLogout, error
               }
             />
           ) : (
-            <SessionForm
-              initial={editingSession}
-              busy={busy}
-              error={error}
-              onSave={(value) =>
-                write(
-                  () =>
-                    form === 'edit-session'
-                      ? cloud.editSession(user.uid, profile.id, editingSession, value)
-                      : cloud.addSession(user.uid, profile.id, value),
-                  'Sesión guardada en tu cuenta.',
-                )
-              }
-            />
+            <>
+              {form === 'edit-session' && editingSession?.catalog && (
+                <details className="catalog-edit-reference">
+                  <summary>Consultar pauta de la fuente FORJA</summary>
+                  <CatalogReferenceDetails reference={editingSession.catalog} />
+                </details>
+              )}
+              <SessionForm
+                initial={editingSession}
+                busy={busy}
+                error={error}
+                onSave={(value) =>
+                  write(
+                    () =>
+                      form === 'edit-session'
+                        ? cloud.editSession(user.uid, profile.id, editingSession, value)
+                        : cloud.addSession(user.uid, profile.id, value),
+                    'Sesión guardada en tu cuenta.',
+                  )
+                }
+              />
+            </>
           )}
         </Dialog>
       )}

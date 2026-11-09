@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Activity, ArrowRight, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowRight, ArrowUpRight, ShieldCheck, BookOpen } from 'lucide-react';
 import { Brand } from './components/Brand.jsx';
 import { AccountMenu } from './components/AccountMenu.jsx';
 import { cloudConfigured } from './services/config.js';
@@ -8,9 +8,16 @@ const TransformationSpace = lazy(() =>
     default: module.TransformationSpace,
   })),
 );
+const CatalogLibrary = lazy(() =>
+  import('./private/CatalogLibrary.jsx').then((module) => ({ default: module.CatalogLibrary })),
+);
 function getPath() {
   const value = window.location.hash.slice(1);
-  return /^\/transformaciones(?:\/[A-Za-z0-9_-]{1,100})?$/.test(value) ? value : '/';
+  return value === '/biblioteca'
+    ? value
+    : /^\/transformaciones(?:\/[A-Za-z0-9_-]{1,100})?$/.test(value)
+      ? value
+      : '/';
 }
 export default function App() {
   const [path, setPath] = useState(getPath);
@@ -118,7 +125,7 @@ export default function App() {
           <Brand />
         </button>
         <nav aria-label="Portal FORJA">
-          <button onClick={() => navigate('/')} aria-current={!privateRoute ? 'page' : undefined}>
+          <button onClick={() => navigate('/')} aria-current={path === '/' ? 'page' : undefined}>
             Inicio
           </button>
           <button onClick={() => navigate('/transformaciones')}>Mi Transformación</button>
@@ -139,7 +146,22 @@ export default function App() {
         )}
       </header>
       <main id="portal-content" className="portal-main" tabIndex={-1}>
-        {privateRoute ? (
+        {path === '/biblioteca' ? (
+          <>
+            <button className="text-button" onClick={() => navigate('/')}>
+              Volver al portal
+            </button>
+            <Suspense fallback={<p role="status">Abriendo biblioteca…</p>}>
+              <CatalogLibrary />
+            </Suspense>
+            <p className="context-note">
+              Para añadir referencias a tu calendario, entra en tu transformación.
+            </p>
+            <button className="outline-button" onClick={() => navigate('/transformaciones')}>
+              Mi transformación
+            </button>
+          </>
+        ) : privateRoute ? (
           <section className="access-card">
             <ShieldCheck size={36} />
             <span className="eyebrow">TU ESPACIO PRIVADO</span>
@@ -208,8 +230,8 @@ export default function App() {
                   <h2 id="modules-title">Herramientas FORJA</h2>
                 </div>
                 <span className="portal-access">
-                  <ShieldCheck size={15} />
-                  Acceso privado
+                  <BookOpen size={15} />
+                  Explora FORJA
                 </span>
               </div>
               <article className="card portal-module">
@@ -226,6 +248,23 @@ export default function App() {
                 </div>
                 <button className="outline-button" onClick={() => navigate('/transformaciones')}>
                   Abrir módulo
+                  <ArrowUpRight size={16} />
+                </button>
+              </article>
+              <article className="card portal-module">
+                <span className="module-icon">
+                  <BookOpen size={27} />
+                </span>
+                <div>
+                  <span className="eyebrow">CONOCIMIENTO Y MOVIMIENTO</span>
+                  <h2>Biblioteca FORJA</h2>
+                  <p>
+                    Fichas de ejercicios y sesiones con su técnica, material y criterios de
+                    aplicación.
+                  </p>
+                </div>
+                <button className="outline-button" onClick={() => navigate('/biblioteca')}>
+                  Explorar biblioteca
                   <ArrowUpRight size={16} />
                 </button>
               </article>

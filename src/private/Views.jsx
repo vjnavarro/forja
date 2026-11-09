@@ -9,7 +9,7 @@ import {
   weeklySummary,
   summaryText,
 } from '../domain/transformation.js';
-import { exercises } from '../demo.js';
+import { CatalogLibrary } from './CatalogLibrary.jsx';
 import { WeekBoard } from './WeekBoard.jsx';
 const stateLabels = {
   confirmed: 'Confirmado',
@@ -92,6 +92,7 @@ export function WeeklyPlan({
   incognito,
   onReveal,
   onSession,
+  onCatalog,
   onToggle,
   onEdit,
   cloud,
@@ -104,6 +105,7 @@ export function WeeklyPlan({
       profile={profile}
       sessions={sessions}
       onSession={onSession}
+      onCatalog={onCatalog}
       onToggle={onToggle}
       onEdit={onEdit}
       cloud={cloud}
@@ -113,76 +115,8 @@ export function WeeklyPlan({
   );
 }
 
-export function ReliableLibrary() {
-  const [filter, setFilter] = useState('Todos');
-  return (
-    <div>
-      <div className="filters" role="group" aria-label="Filtrar ejercicios">
-        {['Todos', 'Natación', 'Fuerza', 'Core'].map((value) => (
-          <button
-            key={value}
-            className={filter === value ? 'selected' : ''}
-            aria-pressed={filter === value}
-            onClick={() => setFilter(value)}
-          >
-            {value}
-          </button>
-        ))}
-      </div>
-      <p className="context-note">
-        Referencias para consultar técnica en canales institucionales. No constituyen una pauta de
-        ejercicios para tu situación clínica.
-      </p>
-      <section className="exercise-grid">
-        {exercises
-          .filter((row) => filter === 'Todos' || filter === row.type)
-          .map((row) => {
-            const swim = row.type === 'Natación';
-            const channel = swim ? 'SwimEngland' : 'MayoClinic';
-            const source = swim ? 'Swim England' : 'Mayo Clinic';
-            const term = swim
-              ? row.name.includes('respiración')
-                ? 'front crawl breathing'
-                : 'front crawl kick'
-              : row.name.includes('Plancha')
-                ? 'plank'
-                : row.name.includes('Remo')
-                  ? 'dumbbell row'
-                  : row.name.includes('Dead')
-                    ? 'core exercises'
-                    : 'squat';
-            return (
-              <article className="card exercise" key={row.name}>
-                {row.image && (
-                  <div className="exercise-art has-image">
-                    <img
-                      src={`${import.meta.env.BASE_URL}images/exercises/${row.image}`}
-                      alt={`Ilustración de ${row.name.toLowerCase()}`}
-                      width="1536"
-                      height="1024"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-                <div className="exercise-copy">
-                  <span className="eyebrow">{row.type}</span>
-                  <h2>{row.name}</h2>
-                  <p>Fuente: {source} · Canal institucional</p>
-                  <a
-                    href={`https://www.youtube.com/@${channel}/search?query=${encodeURIComponent(term)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Buscar vídeos de técnica
-                    <span className="sr-only"> en {source}, nueva pestaña</span>
-                  </a>
-                </div>
-              </article>
-            );
-          })}
-      </section>
-    </div>
-  );
+export function ReliableLibrary({ onPlan, canPlan }) {
+  return <CatalogLibrary onPlan={onPlan} canPlan={canPlan} />;
 }
 export function HealthContext({ context, incognito, onReveal, onSave, busy, error }) {
   if (incognito)

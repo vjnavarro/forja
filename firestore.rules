@@ -49,20 +49,46 @@ service cloud.firestore {
         && shortText(d.note,500) && d.createdAt is timestamp && d.updatedAt == request.time;
     }
     function exercise(value) {
-      let name = value.name;
-      let sets = value.sets;
-      let repetitions = value.repetitions;
-      return value is map && value.keys().hasOnly(['name','sets','repetitions'])
-        && name is string && name.size() > 0 && name.size() <= 80
-        && sets is int && sets >= 0 && sets <= 100
-        && repetitions is string && repetitions.size() > 0 && repetitions.size() <= 40;
+      let name=value.name;
+      let sets=value.sets;
+      let repetitions=value.repetitions;
+      return value.keys().size()==3 && value.keys().hasOnly(['name','sets','repetitions'])
+        && name.matches('(?s)^.{1,80}$') && sets is int && sets>=0 && sets<=100
+        && repetitions.matches('(?s)^.{1,40}$');
     }
     function exerciseAt(items,index) { return items.size() <= index || exercise(items[index]); }
-    function session() {
+    // Typed column joins preserve boundaries and keep validation below
+    // Firestore's expression budget even beside six personal exercise records.
+    function catalogColumn(items,count,pattern) {
+      let joined=items.join('␟');
+      // Equality with split strings rejects coercible numbers, booleans, maps
+      // and embedded separators without per-element expression overhead.
+      return items is list && items.size()==count && joined.split('␟')==items && joined.matches(pattern);
+    }
+    function catalogTasks(t) {
+      let count=t.taskKeys.size();
+      return t.keys().size()==4 && t.keys().hasOnly(['taskKeys','exerciseIds','names','prescriptions']) && count>0 && count<=6 && t.taskKeys.toSet().size()==count
+        && catalogColumn(t.taskKeys,count,'^[^␟]{1,100}(␟[^␟]{1,100}){0,5}$')
+        && catalogColumn(t.exerciseIds,count,'^EX-[0-9]{3}(␟EX-[0-9]{3}){0,5}$')
+        && catalogColumn(t.names,count,'^[^␟]{1,160}(␟[^␟]{1,160}){0,5}$')
+        && catalogColumn(t.prescriptions,count,'^[^␟]{1,1000}[^␟]{0,1000}(␟[^␟]{1,1000}[^␟]{0,1000}){0,5}$');
+    }
+    function catalogReference(c) {
+      return c.keys().size()==11 && c.keys().hasOnly(['schemaVersion','release','sessionId','title','audience','referenceOnly','context','purpose','sourcePath','tasks','guidance'])
+        && c.schemaVersion==1 && c.release.matches('^[a-f0-9]{40}$') && c.sessionId.matches('^SES-[0-9]{3}$')
+        && c.title.matches('(?s)^.{1,200}$') && c.audience=='youth' && c.referenceOnly==true
+        && c.context is string && c.context.size()>0 && c.context.size()<=8000
+        && c.purpose is string && c.purpose.size()>0 && c.purpose.size()<=4000
+        && c.sourcePath is string && c.sourcePath.size()<=240 && c.sourcePath.matches('^docs/06-sessions/[a-z0-9-]+[.]md$')
+        && c.guidance is string && c.guidance.size()>0 && c.guidance.size()<=40000
+        && catalogTasks(c.tasks);
+    }
+    // Creates validate source snapshots. Updates compare the immutable snapshot
+    // below, avoiding repeated deep validation on every personal edit.
+    function session(checkCatalog) {
       let d=request.resource.data;
       let items=d.exercises;
-      return d.keys().hasOnly(['date','type','completed','minutes','distance','exercises','discomfort','notes','origin','createdAt','updatedAt'])
-        && d.keys().hasAll(['date','type','completed','minutes','distance','exercises','discomfort','notes','createdAt','updatedAt'])
+      return d.keys().hasOnly(['date','type','completed','minutes','distance','exercises','discomfort','notes','origin','catalog','createdAt','updatedAt'])
         && validDate(d.date) && d.type in ['swim','strength','core'] && d.completed is bool
         && (d.minutes == null || (d.minutes is number && d.minutes >= 0 && d.minutes <= 1440))
         && (d.distance == null || (d.distance is number && d.distance >= 0 && d.distance <= 100000))
@@ -70,6 +96,7 @@ service cloud.firestore {
         && exerciseAt(items,0) && exerciseAt(items,1) && exerciseAt(items,2) && exerciseAt(items,3) && exerciseAt(items,4) && exerciseAt(items,5)
         && d.discomfort in ['not-reported','none','present'] && shortText(d.notes,2000)
         && (!('origin' in d) || sessionOrigin(d.origin))
+        && (!checkCatalog || !('catalog' in d) || catalogReference(d.catalog))
         && d.createdAt is timestamp && d.updatedAt == request.time;
     }
     function sessionOrigin(o) {
@@ -187,8 +214,9 @@ service cloud.firestore {
       }
       match /sessions/{id} {
         allow read: if owner(uid);
-        allow create: if owner(uid) && sessionParent(uid,tid) && session() && sessionPlanLink(uid,tid,id) && request.resource.data.createdAt == request.time;
-        allow update: if owner(uid) && sessionParent(uid,tid) && session() && request.resource.data.createdAt == resource.data.createdAt;
+        allow create: if owner(uid) && sessionParent(uid,tid) && session(true) && sessionPlanLink(uid,tid,id) && request.resource.data.createdAt == request.time;
+        allow update: if owner(uid) && sessionParent(uid,tid) && session(false) && request.resource.data.createdAt == resource.data.createdAt
+          && (('catalog' in resource.data && request.resource.data.catalog == resource.data.catalog) || (!('catalog' in resource.data) && !('catalog' in request.resource.data)));
         allow delete: if owner(uid) && sessionParent(uid,tid);
       }
       match /private/context {

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import './week-board.css';
+import { CatalogReferenceDetails } from './CatalogLibrary.jsx';
 import {
   CalendarDays,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Dumbbell,
@@ -20,7 +22,17 @@ import { formatDate, today, weekBounds } from '../domain/transformation.js';
 
 const activityIcons = { swim: Waves, strength: Dumbbell, core: PersonStanding };
 const weekdays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-export function WeekBoard({ profile, sessions, onSession, onToggle, onEdit, cloud, uid, busy }) {
+export function WeekBoard({
+  profile,
+  sessions,
+  onSession,
+  onCatalog,
+  onToggle,
+  onEdit,
+  cloud,
+  uid,
+  busy,
+}) {
   const [date, setDate] = useState(() => weekBounds(today()).start);
   const [program, setProgram] = useState(undefined);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -254,6 +266,15 @@ export function WeekBoard({ profile, sessions, onSession, onToggle, onEdit, clou
                           {row.completed ? 'Hecha' : 'Pendiente'}
                         </span>
                       </div>
+                      {row.catalog && (
+                        <p className="catalog-context">
+                          FORJA · {row.catalog.sessionId} · {row.catalog.title}
+                          <br />
+                          {row.exercises.length
+                            ? 'Detalles personales registrados.'
+                            : 'Pauta personal por concretar.'}
+                        </p>
+                      )}
                       <p className="activity-dose">
                         {row.distance != null
                           ? `${row.distance} m`
@@ -299,6 +320,12 @@ export function WeekBoard({ profile, sessions, onSession, onToggle, onEdit, clou
                           <Trash2 size={17} />
                         </button>
                       </div>
+                      {row.catalog && (
+                        <details className="activity-details">
+                          <summary>Consultar referencia FORJA</summary>
+                          <CatalogReferenceDetails reference={row.catalog} />
+                        </details>
+                      )}
                       {(row.exercises.length > 0 || row.notes || row.origin?.edited) && (
                         <details className="activity-details">
                           <summary>Ver detalles</summary>
@@ -334,6 +361,15 @@ export function WeekBoard({ profile, sessions, onSession, onToggle, onEdit, clou
                   );
                 })}
               </div>
+              <button
+                className="day-add catalog-day-add"
+                disabled={disabled}
+                aria-label={`Añadir sesión FORJA el ${formatDate(day)}`}
+                onClick={() => onCatalog({ date: day })}
+              >
+                <BookOpen size={16} />
+                Sesión FORJA
+              </button>
             </article>
           );
         })}

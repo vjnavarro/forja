@@ -1,3 +1,4 @@
+import { encodeCatalogReference, decodeCatalogReference } from '../domain/catalog-reference.js';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -34,6 +35,7 @@ import {
 
 import { cloudConfigured, useEmulators } from './config.js';
 import { validateAppearance } from '../domain/avatars.js';
+import { addCatalogSession } from './catalog-sessions.js';
 import { acceptWeeklyPlan } from './weekly-plans.js';
 import { prepareWeekReset, resetTrainingWeek, deleteTrainingSession } from './week-maintenance.js';
 import { decodeProgram } from '../domain/training.js';
@@ -99,6 +101,7 @@ async function initializeCloud() {
     for (const session of sessions)
       batch.set(doc(collection(parent, 'sessions')), {
         ...validateSession(session),
+        ...(session.catalog ? { catalog: encodeCatalogReference(session.catalog) } : {}),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -159,7 +162,24 @@ async function initializeCloud() {
     watchRecords(uid, id, type, next, error) {
       return onSnapshot(
         query(rows(uid, id, type), orderBy('date', 'asc')),
-        (snap) => next(snap.docs.map((row) => ({ ...row.data(), id: row.id }))),
+        (snap) => {
+          try {
+            next(
+              snap.docs.map((row) => {
+                const value = row.data();
+                return {
+                  ...value,
+                  ...(type === 'sessions' && value.catalog
+                    ? { catalog: decodeCatalogReference(value.catalog) }
+                    : {}),
+                  id: row.id,
+                };
+              }),
+            );
+          } catch (err) {
+            error?.(err);
+          }
+        },
         error,
       );
     },
@@ -235,10 +255,12 @@ async function initializeCloud() {
       batch.update(trans(uid, id), { updatedAt: serverTimestamp() });
       await batch.commit();
     },
+    addCatalogSession: (uid, id, value) => addCatalogSession(db, uid, id, value),
     async addSession(uid, id, value) {
       const batch = writeBatch(db);
       batch.set(doc(rows(uid, id, 'sessions')), {
         ...validateSession(value),
+        ...(value.catalog ? { catalog: encodeCatalogReference(value.catalog) } : {}),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -268,6 +290,7 @@ async function initializeCloud() {
           );
         tx.update(ref, {
           ...next,
+          ...(current.data().catalog ? { catalog: current.data().catalog } : {}),
           ...(original.origin ? { origin: { ...original.origin, edited: true } } : {}),
           updatedAt: serverTimestamp(),
         });

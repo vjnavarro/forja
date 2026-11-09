@@ -1,3 +1,4 @@
+import { decodeCatalogReference } from './catalog-reference.js';
 import { ACTIVITY_TYPES, dateTime, today, validateSession, weekBounds } from './transformation.js';
 import { ACTIVITY_LABELS, plannedSession, shiftDate, validateDraft } from './planning.js';
 
@@ -136,6 +137,7 @@ export function fingerprintSessions(rows) {
         row.notes,
         row.updatedAt?.toMillis?.() ?? 0,
         row.origin ?? null,
+        row.catalog ? decodeCatalogReference(row.catalog) : null,
       ]),
   );
 }

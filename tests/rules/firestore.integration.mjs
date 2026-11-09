@@ -1,3 +1,9 @@
+import {
+  encodeCatalogReference,
+  decodeCatalogReference,
+} from '../../src/domain/catalog-reference.js';
+import { addCatalogSession } from '../../src/services/catalog-sessions.js';
+import { catalog, catalogSessionDraft } from '../../src/domain/catalog.js';
 import { after, before, beforeEach, test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
@@ -855,4 +861,182 @@ test('proposal outside program dates reports the period instead of demanding an 
       prepareTrainingProposal(one, 'one', 'first', date),
       /fuera del periodo.*03\/02\/2025/,
     );
+});
+
+test('canonical references store contextual snapshots privately with empty personal doses and preserve the source on edits', async () => {
+  const one = db('one', 'one@example.test');
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  for (const session of catalog.sessions) {
+    const value = catalogSessionDraft({
+      sessionId: session.identity.id,
+      date: '2025-02-03',
+      contextReviewed: true,
+    });
+    const id = await addCatalogSession(one, 'one', 'first', value);
+    const ref = doc(parent, 'sessions', id),
+      stored = (await getDoc(ref)).data();
+    assert.deepEqual(decodeCatalogReference(stored.catalog), value.catalog);
+    assert.equal(stored.completed, false);
+    assert.deepEqual(stored.exercises, []);
+    const edit = writeBatch(one);
+    edit.update(ref, {
+      notes: 'Registro personal sintético',
+      exercises: [{ name: 'Pauta propia sintética', sets: 1, repetitions: '5' }],
+      updatedAt: serverTimestamp(),
+    });
+    edit.update(parent, { updatedAt: serverTimestamp() });
+    await assertSucceeds(edit.commit());
+    assert.deepEqual(decodeCatalogReference((await getDoc(ref)).data().catalog), value.catalog);
+    const altered = writeBatch(one);
+    altered.update(ref, {
+      catalog: { ...stored.catalog, title: 'Cambiar la fuente' },
+      updatedAt: serverTimestamp(),
+    });
+    altered.update(parent, { updatedAt: serverTimestamp() });
+    await assertFails(altered.commit());
+  }
+  assert.equal((await getDocs(collection(parent, 'sessions'))).size, 3);
+  const other = db('two', 'two@example.test');
+  await assertFails(getDocs(collection(other, parent.path, 'sessions')));
+  await assert.rejects(
+    addCatalogSession(
+      other,
+      'one',
+      'first',
+      catalogSessionDraft({ sessionId: 'SES-001', date: '2025-02-04', contextReviewed: true }),
+    ),
+  );
+});
+test('concurrent calendar reference acceptance prevents duplicates and does not replace an existing record', async () => {
+  const one = db('one', 'one@example.test');
+  const value = catalogSessionDraft({
+    sessionId: 'SES-002',
+    date: '2025-02-03',
+    contextReviewed: true,
+  });
+  const attempts = await Promise.allSettled([
+    addCatalogSession(one, 'one', 'first', value),
+    addCatalogSession(one, 'one', 'first', value),
+  ]);
+  assert.equal(attempts.filter((row) => row.status === 'fulfilled').length, 1);
+  const rows = await getDocs(
+    collection(one, 'users', 'one', 'transformations', 'first', 'sessions'),
+  );
+  assert.equal(rows.size, 1);
+  assert.deepEqual(decodeCatalogReference(rows.docs[0].data().catalog), value.catalog);
+  await assert.rejects(
+    addCatalogSession(one, 'one', 'first', { ...value, completed: true }),
+    /sin registros realizados/,
+  );
+});
+test('catalog rules reject malformed or unbounded snapshots and accept full references beside six personal records', async () => {
+  const one = db('one', 'one@example.test');
+  const value = catalogSessionDraft({
+    sessionId: 'SES-001',
+    date: '2025-02-03',
+    contextReviewed: true,
+  });
+  const taskList = [...value.catalog.tasks, { ...value.catalog.tasks[0], key: 'sixth-valid-task' }];
+  const source = encodeCatalogReference({ ...value.catalog, tasks: taskList });
+  const stamped = {
+    ...value,
+    catalog: source,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  await assertSucceeds(writeSession(one, 'six-catalog-tasks', stamped));
+  await assertSucceeds(
+    writeSession(one, 'historical-catalog-with-six-recorded-exercises', {
+      ...stamped,
+      completed: true,
+      exercises: Array.from({ length: 6 }, () => ({
+        name: 'Registro sintético',
+        sets: 1,
+        repetitions: '5',
+      })),
+    }),
+  );
+  for (const [index, change] of [
+    { referenceOnly: false },
+    { guidance: 'x'.repeat(40001) },
+    { tasks: { ...source.tasks, names: [5] } },
+    { tasks: { ...source.tasks, names: Array(6).fill(5) } },
+    { tasks: { ...source.tasks, names: ['', ...source.tasks.names.slice(1)] } },
+    { tasks: { ...source.tasks, prescriptions: ['', ...source.tasks.prescriptions.slice(1)] } },
+    { tasks: { ...source.tasks, taskKeys: Array(6).fill('duplicate') } },
+    { tasks: { ...source.tasks, prescriptions: Array(6).fill('x'.repeat(2001)) } },
+    { tasks: { ...source.tasks, names: Array(6).fill('a␟b') } },
+    { sourcePath: 'https://example.test/forged' },
+    { release: ['x'] },
+    { tasks: { ...source.tasks, taskKeys: [...source.tasks.taskKeys, 'seventh'] } },
+  ].entries())
+    await assertFails(
+      writeSession(one, `bad-catalog-${index}`, { ...stamped, catalog: { ...source, ...change } }),
+    );
+});
+
+test('session validation still rejects every missing required field and cannot insert a reference through an update', async () => {
+  const one = db('one', 'one@example.test');
+  const value = {
+    ...plannedSession('2025-02-03', 'core'),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  for (const field of [
+    'date',
+    'type',
+    'completed',
+    'minutes',
+    'distance',
+    'exercises',
+    'discomfort',
+    'notes',
+    'createdAt',
+    'updatedAt',
+  ]) {
+    const missing = { ...value };
+    delete missing[field];
+    await assertFails(writeSession(one, `missing-${field}`, missing));
+  }
+  await writeSession(one, 'manual-to-update', value);
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const update = writeBatch(one);
+  update.update(doc(parent, 'sessions', 'manual-to-update'), {
+    catalog: encodeCatalogReference(
+      catalogSessionDraft({ sessionId: 'SES-001', date: '2025-02-03', contextReviewed: true })
+        .catalog,
+    ),
+    updatedAt: serverTimestamp(),
+  });
+  update.update(parent, { updatedAt: serverTimestamp() });
+  await assertFails(update.commit());
+});
+test('weekly review fingerprints match decoded UI references and encoded Firestore storage', async () => {
+  const one = db('one', 'one@example.test');
+  await addCatalogSession(
+    one,
+    'one',
+    'first',
+    catalogSessionDraft({ sessionId: 'SES-002', date: '2025-02-03', contextReviewed: true }),
+  );
+  const parent = doc(one, 'users', 'one', 'transformations', 'first');
+  const rows = (await getDocs(collection(parent, 'sessions'))).docs.map((row) => ({
+    ...row.data(),
+    id: row.id,
+  }));
+  const ui = rows.map((row) => ({ ...row, catalog: decodeCatalogReference(row.catalog) }));
+  const fingerprint = await fingerprintSessions(ui);
+  await assertSucceeds(
+    saveTrainingReview(one, 'one', 'first', '2025-02-03', {
+      fingerprint,
+      wellbeing: 'mixed',
+      discomfort: 'unknown',
+      decision: 'maintain',
+      notes: '',
+    }),
+  );
+  assert.equal(
+    (await getDoc(doc(parent, 'reviews', '2025-02-03'))).data().fingerprint,
+    fingerprint,
+  );
 });

@@ -1,3 +1,4 @@
+import { validateCatalogReference } from './catalog-reference.js';
 import { validateAppearance } from './avatars.js';
 
 export const MAX_WEIGHT = 350;
@@ -139,6 +140,9 @@ export function validateSession(value) {
       ? value.discomfort
       : 'not-reported',
     notes: text(value.notes, 2000),
+    ...(Object.hasOwn(value, 'catalog')
+      ? { catalog: validateCatalogReference(value.catalog) }
+      : {}),
   };
 }
 export function referenceWeights(weights) {
@@ -275,7 +279,18 @@ export function weeklySummary(profile, weights, sessions, date) {
       ]),
     ),
     sessions: weekSessions.map(
-      ({ date, type, completed, minutes, distance, exercises, discomfort, notes, origin }) => ({
+      ({
+        date,
+        type,
+        completed,
+        minutes,
+        distance,
+        exercises,
+        discomfort,
+        notes,
+        origin,
+        catalog,
+      }) => ({
         date,
         type,
         completed,
@@ -285,6 +300,7 @@ export function weeklySummary(profile, weights, sessions, date) {
         discomfort,
         notes,
         ...(origin ? { origin: { ...origin } } : {}),
+        ...(catalog ? { catalog: validateCatalogReference(catalog) } : {}),
       }),
     ),
     milestones: metrics.milestones.filter((item) => item.date >= start && item.date <= end),

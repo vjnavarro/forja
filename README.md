@@ -118,6 +118,15 @@ conserva; las sesiones se editan individualmente. No hay prescripción médica
 automática ni una conexión de IA que reciba el historial.
 [Funcionamiento, fuentes, límites y activación](docs/training-planning.md).
 
+## Biblioteca FORJA
+
+El portal ofrece `#/biblioteca`, con 15 fichas y 3 sesiones del repositorio general
+FORJA, fijadas a una versión y con recursos originales. En una transformación se
+pueden añadir referencias desde el calendario, preservando la pauta de origen y
+sus diferencias respecto a los detalles personales. Las sesiones actuales tienen
+contexto juvenil y quedan pendientes de adaptación individual.
+[Uso, procedencia, actualización y publicación](docs/forja-catalog.md).
+
 ## Publicación
 
 En GitHub, **Settings → Pages → Source: GitHub Actions**. Las PR ejecutan pruebas y

@@ -1,0 +1,215 @@
+.forja-catalog {
+  color: var(--text-primary, #0b2a4a);
+  min-width: 0;
+}
+.catalog-heading {
+  margin-bottom: 24px;
+}
+.catalog-heading h1 {
+  font-size: clamp(26px, 4vw, 38px);
+  margin: 9px 0;
+}
+.catalog-heading p,
+.catalog-exercise-card p,
+.catalog-session-card p {
+  color: var(--text-secondary, #56677a);
+  line-height: 1.6;
+}
+.catalog-filters {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+.catalog-filters label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.catalog-filters label span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.catalog-filters input,
+.catalog-filters select {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #aebfd0;
+  border-radius: 9px;
+  background: #fff;
+  color: #12304a;
+  font: inherit;
+  min-height: 44px;
+}
+.catalog-exercise-grid,
+.catalog-session-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.catalog-exercise-card {
+  overflow: hidden;
+  padding: 0;
+}
+.catalog-exercise-card img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3/2;
+  object-fit: contain;
+  background: #eef3f8;
+}
+.catalog-exercise-card > div {
+  padding: 18px;
+}
+.catalog-exercise-card h2 {
+  margin: 10px 0;
+  font-size: 1.15rem;
+}
+.catalog-session-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.catalog-session-card .outline-button {
+  margin-top: auto;
+}
+.catalog-session-card h3 {
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.catalog-detail {
+  padding: clamp(18px, 3vw, 32px);
+  margin-top: 15px;
+}
+.catalog-detail > img {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  max-height: 430px;
+  object-fit: contain;
+  display: block;
+  margin: auto;
+}
+.catalog-detail p,
+.catalog-detail li,
+.catalog-session-details p,
+.catalog-session-details li {
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.catalog-text-section {
+  margin: 22px 0;
+}
+.catalog-text-section h3 {
+  font-size: 1rem;
+  margin-bottom: 9px;
+}
+.catalog-text-section ul {
+  padding-left: 22px;
+}
+.catalog-provenance {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: var(--text-secondary, #56677a);
+  margin: 28px 0;
+  font-size: 0.8rem;
+}
+.catalog-provenance a,
+.forja-catalog a {
+  color: #1758c4;
+  text-decoration: underline;
+}
+.catalog-reference-task {
+  border-left: 3px solid #94b8ce;
+  border-radius: 6px;
+  background: #f2f6fa;
+  padding: 14px;
+  margin: 14px 0;
+  color: #13314a;
+}
+.catalog-reference-task h4 {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+.catalog-reference-task p {
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.catalog-reference-task summary,
+.catalog-reference > details > summary {
+  cursor: pointer;
+  padding: 12px 0;
+  min-height: 44px;
+}
+.catalog-preserve-lines {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.catalog-reference > a {
+  color: inherit;
+  text-decoration: underline;
+}
+.catalog-reference > p {
+  overflow-wrap: anywhere;
+}
+.catalog-session-block {
+  margin: 24px 0;
+}
+.forja-catalog .catalog-session-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+.private-dialog .forja-catalog .catalog-session-grid {
+  grid-template-columns: 1fr;
+}
+.catalog-day-add {
+  width: 100%;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+.catalog-context {
+  font-size: 0.75rem;
+  color: #cce0ef;
+  line-height: 1.5;
+}
+@media (max-width: 1000px) {
+  .catalog-exercise-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .catalog-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .catalog-filters > label:first-child {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 600px) {
+  .catalog-exercise-grid,
+  .catalog-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .catalog-exercise-card img {
+    max-height: 240px;
+  }
+}
+.catalog-preview summary,
+.catalog-edit-reference > summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+.catalog-video-resources {
+  margin-top: 24px;
+}
+.catalog-video-resources summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 12px 0;
+}
+.catalog-video-resources li {
+  padding: 8px 0;
+}
